@@ -1,0 +1,53 @@
+from __future__ import annotations
+
+from typing import Iterable
+
+from app.game.broadcaster import Broadcaster
+from app.game.constants import Phase, Role
+from app.game.events import GameEvent
+from app.game.state import GameState
+from app.players.base import ActionPrompt, Player
+
+
+async def run_witch_action(
+    state: GameState,
+    players: Iterable[Player],
+    *,
+    broadcaster: Broadcaster,
+    deadline_ts: float,
+) -> None:
+    state.phase = Phase.WITCH_ACTION
+    await broadcaster.broadcast(GameEvent(
+        type="phase_change", payload={"phase": "witch_action", "deadline_ts": deadline_ts},
+    ))
+    alive_witch_ids = {p.id for p in state.alive_players_by_role(Role.WITCH)}
+    witch = next((p for p in players if p.id in alive_witch_ids), None)
+    if witch is None:
+        return
+    await witch.notify(GameEvent(
+        type="witch_info",
+        payload={
+            "tonight_killed": state.tonight_killed_by_wolves,
+            "save_left": state.witch.save_left,
+            "poison_left": state.witch.poison_left,
+        },
+        audience=f"player:{witch.id}",
+    ))
+    options = [p.id for p in state.alive_players()]
+    resp = await witch.request(ActionPrompt(
+        action="witch_action", options=options, deadline_ts=deadline_ts,
+        hint="Reply via witch_save/witch_poison/witch_skip",
+    ))
+    if resp.action == "witch_save" and state.witch.save_left:
+        if state.tonight_killed_by_wolves and resp.target == state.tonight_killed_by_wolves:
+            state.tonight_saved_by_witch = True
+            state.witch.save_left = False
+            return
+    if resp.action == "witch_poison" and state.witch.poison_left:
+        if resp.target in options:
+            state.tonight_poisoned_by_witch = resp.target
+            state.witch.poison_left = False
+            return
+
+
+__all__ = ["run_witch_action"]
