@@ -20,7 +20,13 @@ async def run_seer_check(
     await broadcaster.broadcast(GameEvent(
         type="phase_change", payload={"phase": "seer_check", "deadline_ts": deadline_ts},
     ))
-    seer = next((p for p in players if p.role == Role.SEER and p.alive), None)
+    seer = next(
+        (p for p in players
+         if p.role == Role.SEER
+         and state.get_player(p.id) is not None
+         and state.get_player(p.id).alive),
+        None,
+    )
     if seer is None:
         return
     options = [p.id for p in state.alive_players() if p.id != seer.id]

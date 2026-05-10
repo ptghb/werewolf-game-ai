@@ -25,7 +25,8 @@ async def run_wolf_kill(
     await broadcaster.broadcast(GameEvent(
         type="phase_change", payload={"phase": "wolf_kill", "deadline_ts": deadline_ts},
     ))
-    wolves = [p for p in players if p.role == Role.WEREWOLF and p.alive]
+    alive_wolf_ids = {p.id for p in state.alive_players_by_role(Role.WEREWOLF)}
+    wolves = [p for p in players if p.id in alive_wolf_ids]
     alive_non_wolf = [p for p in state.alive_players() if p.role != Role.WEREWOLF]
     options = [p.id for p in alive_non_wolf]
     prompts = [
