@@ -1,3 +1,4 @@
+from typing import Optional, Dict
 import pytest
 
 from app.game.broadcaster import Broadcaster
@@ -7,7 +8,7 @@ from app.game.state import GameState, PlayerState
 from tests.fakes import FakeAIPlayer
 
 
-def _setup(wolf_targets: list[str | None]):
+def _setup(wolf_targets: list[Optional[str]]):
     roles = [Role.WEREWOLF, Role.WEREWOLF, Role.WEREWOLF,
              Role.WITCH, Role.SEER, Role.VILLAGER]
     players = [
