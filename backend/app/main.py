@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from app.game.assign import assign_roles
-from app.game.constants import Role
+from app.game.constants import Phase, Role
 from app.game.engine import GameEngine
 from app.game.events import GameEvent
 from app.players.ai import AIPlayer
@@ -83,6 +83,27 @@ async def ws_endpoint(ws: WebSocket):
         return
     await player.attach(ws, last_ack_seq=int(hello.get("last_ack_seq", 0)))
 
+    # Send room state immediately so the client knows the player list
+    await ws.send_json({
+        "type": "room_state",
+        "payload": {
+            "room_code": room.code,
+            "host_id": room.host_id,
+            "players": [
+                {
+                    "id": p.id,
+                    "nickname": p.nickname,
+                    "seat": p.seat,
+                    "is_ai": p.is_ai,
+                    "alive": p.alive,
+                    "connected": getattr(p, "socket", None) is not None or p.is_ai,
+                }
+                for p in room.players
+            ],
+        },
+        "seq": player._next_seq(),
+    })
+
     try:
         while True:
             msg = await ws.receive_json()
@@ -102,33 +123,54 @@ async def ws_endpoint(ws: WebSocket):
 
 
 async def _run_game(room) -> None:
-    # Assign roles
-    roles = assign_roles(6)
-    wolf_ids = []
-    for player, role in zip(room.players, roles):
-        player.role = role
-        if role == Role.WEREWOLF:
-            wolf_ids.append(player.id)
-    for p in room.players:
-        if p.role == Role.WEREWOLF and hasattr(p, "wolf_teammates"):
-            p.wolf_teammates = [w for w in wolf_ids if w != p.id]
-        # Notify role privately
-        extra = {"wolf_teammates": [w for w in wolf_ids if w != p.id]} if p.role == Role.WEREWOLF else {}
-        await p.notify(GameEvent(
-            type="role_assigned",
-            payload={"role": p.role.value, **extra},
-            audience=f"player:{p.id}",
-        ))
+    try:
+        # Assign roles
+        roles = assign_roles(6)
+        wolf_ids = []
+        for player, role in zip(room.players, roles):
+            player.role = role
+            if role == Role.WEREWOLF:
+                wolf_ids.append(player.id)
+        for p in room.players:
+            if p.role == Role.WEREWOLF and hasattr(p, "wolf_teammates"):
+                p.wolf_teammates = [w for w in wolf_ids if w != p.id]
+            # Notify role privately
+            extra = {"wolf_teammates": [w for w in wolf_ids if w != p.id]} if p.role == Role.WEREWOLF else {}
+            await p.notify(GameEvent(
+                type="role_assigned",
+                payload={"role": p.role.value, **extra},
+                audience=f"player:{p.id}",
+            ))
 
-    # Attach llm lazily for AI players
-    for p in room.players:
-        if isinstance(p, AIPlayer) and p.llm is None:
+        # Attach llm lazily for AI players
+        for p in room.players:
+            if isinstance(p, AIPlayer) and p.llm is None:
+                try:
+                    p.llm = build_llm()
+                except Exception:
+                    p.llm = None  # fallback path kicks in inside AIPlayer
+
+        # Pick start seat
+        start_id = random.choice(room.players).id
+
+        # Broadcast phase change to all players so the frontend knows game started
+        for p in room.players:
+            await p.notify(GameEvent(
+                type="phase_change",
+                payload={"phase": Phase.NIGHT_START.value, "deadline_ts": None, "day": 1},
+            ))
+
+        engine = GameEngine(room_code=room.code, players=room.players, start_player_id=start_id)
+        await engine.run_until_game_over()
+    except Exception as e:
+        import traceback
+        print(f"[_run_game] ERROR: {e}\n{traceback.format_exc()}")
+        # Notify players that something went wrong
+        for p in room.players:
             try:
-                p.llm = build_llm()
+                await p.notify(GameEvent(
+                    type="system_announce",
+                    payload={"text": f"游戏发生错误: {str(e)}"},
+                ))
             except Exception:
-                p.llm = None  # fallback path kicks in inside AIPlayer
-
-    # Pick start seat
-    start_id = room.players[random.randrange(len(room.players))].id
-    engine = GameEngine(room_code=room.code, players=room.players, start_player_id=start_id)
-    await engine.run_until_game_over()
+                pass
