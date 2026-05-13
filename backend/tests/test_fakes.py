@@ -25,6 +25,16 @@ async def test_fake_ai_defaults_to_first_option():
 
 
 @pytest.mark.asyncio
+async def test_fake_ai_falls_back_when_scripted_target_is_not_an_option():
+    fake = FakeAIPlayer(
+        id="p1", nickname="a", role=Role.VILLAGER, seat=0,
+        scripted={"day_vote": "dead_player"},
+    )
+    resp = await fake.request(ActionPrompt(action="day_vote", options=["p2", "p3"]))
+    assert resp.target == "p2"
+
+
+@pytest.mark.asyncio
 async def test_fake_ai_records_notifications():
     fake = FakeAIPlayer(id="p1", nickname="a", role=Role.VILLAGER, seat=0)
     await fake.notify(GameEvent(type="system_announce", payload={"text": "x"}))

@@ -23,7 +23,10 @@ class FakeAIPlayer:
         if prompt.action in ("speak", "speech", "last_words"):
             return ActionResponse(action=prompt.action, text=self.speech)
         if prompt.action in self.scripted:
-            return ActionResponse(action=prompt.action, target=self.scripted[prompt.action])
+            target = self.scripted[prompt.action]
+            if target is not None and prompt.options and target not in prompt.options:
+                target = prompt.options[0]
+            return ActionResponse(action=prompt.action, target=target)
         if self.scripted:
             # Sub-action scripted (e.g. witch_save when prompt asks witch_action)
             action_name = next(iter(self.scripted))
