@@ -33,34 +33,183 @@ export default function Lobby() {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ nickname }),
     });
-    if (!r.ok) { alert("加入失败"); return; }
+    if (!r.ok) { alert("房间不存在或已满"); return; }
     const body = await r.json();
     attach(body.room_code, body.player_id, false);
   };
 
+  const pageStyle = {
+    minHeight: "100vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "radial-gradient(ellipse at 50% 30%, #14162e 0%, var(--bg-deep) 70%)",
+    padding: 20,
+    position: "relative",
+    overflow: "hidden",
+  };
+
+  const blobStyle = (size, color, x, y, delay) => ({
+    position: "absolute",
+    width: size,
+    height: size,
+    borderRadius: "50%",
+    background: color,
+    filter: "blur(80px)",
+    opacity: 0.15,
+    top: y,
+    left: x,
+    animation: `blob-float 8s ease-in-out infinite ${delay}s`,
+    pointerEvents: "none",
+  });
+
+  const cardStyle = {
+    background: "var(--bg-card)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-xl)",
+    padding: "40px 36px",
+    width: "100%",
+    maxWidth: 440,
+    boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+    position: "relative",
+    zIndex: 1,
+  };
+
+  const inputGroupStyle = {
+    marginBottom: 16,
+  };
+
+  const labelStyle = {
+    display: "block",
+    fontSize: 13,
+    fontWeight: 600,
+    color: "var(--fg-secondary)",
+    marginBottom: 6,
+    letterSpacing: "0.3px",
+  };
+
   return (
-    <div style={{ padding: 40, maxWidth: 520, margin: "0 auto" }}>
-      <h1>狼人杀 AI 陪练</h1>
-      <label>昵称：<input value={nickname} onChange={(e) => setNickname(e.target.value)} /></label>
-      <div style={{ margin: "16px 0" }}>
-        <label><input type="radio" checked={mode === "create"} onChange={() => setMode("create")} /> 创建房间</label>
-        <label style={{ marginLeft: 16 }}><input type="radio" checked={mode === "join"} onChange={() => setMode("join")} /> 加入房间</label>
+    <div style={pageStyle}>
+      {/* 背景光晕 */}
+      <div style={blobStyle("400px", "var(--accent)", "-5%", "-10%", "0")} />
+      <div style={blobStyle("300px", "var(--gold)", "60%", "50%", "2")} />
+      <div style={blobStyle("350px", "var(--danger)", "70%", "-5%", "4")} />
+
+      <div style={cardStyle}>
+        {/* Logo区域 */}
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: "var(--radius-lg)",
+            background: "linear-gradient(135deg, var(--accent), #a78bfa)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            margin: "0 auto 16px",
+            boxShadow: "0 0 30px var(--accent-glow)",
+            fontSize: 28, fontWeight: 800, color: "white",
+          }}>狼</div>
+          <h1 style={{
+            fontSize: 24, fontWeight: 700,
+            background: "linear-gradient(135deg, var(--fg-primary), var(--accent))",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            letterSpacing: "-0.5px",
+          }}>狼人杀 AI 陪练</h1>
+          <p style={{ color: "var(--fg-muted)", fontSize: 13, marginTop: 4 }}>
+            与 AI 一起体验烧脑推理
+          </p>
+        </div>
+
+        {/* 昵称输入 */}
+        <div style={inputGroupStyle}>
+          <label style={labelStyle}>你的昵称</label>
+          <input
+            placeholder="输入昵称..."
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            maxLength={8}
+          />
+        </div>
+
+        {/* 模式切换 */}
+        <div style={{
+          display: "flex", gap: 0, marginBottom: 20,
+          background: "var(--bg-elevated)",
+          borderRadius: "var(--radius-md)",
+          padding: 3,
+        }}>
+          {[
+            { key: "create", label: "创建房间" },
+            { key: "join", label: "加入房间" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setMode(tab.key)}
+              style={{
+                flex: 1,
+                background: mode === tab.key ? "var(--accent)" : "transparent",
+                color: mode === tab.key ? "white" : "var(--fg-secondary)",
+                boxShadow: mode === tab.key ? "0 0 15px var(--accent-glow)" : "none",
+                borderRadius: "calc(var(--radius-md) - 2px)",
+                fontWeight: 600,
+                fontSize: 13,
+              }}
+            >{tab.label}</button>
+          ))}
+        </div>
+
+        {/* 创建模式 */}
+        {mode === "create" && (
+          <div style={{ animation: "fade-in 200ms ease-out" }}>
+            <div style={inputGroupStyle}>
+              <label style={labelStyle}>真人玩家数量</label>
+              <div style={{ display: "flex", gap: 6 }}>
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setHumanSlots(n)}
+                    className={humanSlots === n ? "btn-primary" : "btn-secondary"}
+                    style={{
+                      flex: 1, padding: "8px 0", fontSize: 12,
+                      boxShadow: humanSlots === n ? "0 0 12px var(--accent-glow)" : "none",
+                    }}
+                  >{n}
+                    <span style={{ display: "block", fontSize: 10, opacity: 0.6, marginTop: 1 }}>
+                      {6 - n}AI
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              className="btn-primary"
+              onClick={onCreate}
+              disabled={!nickname}
+              style={{ width: "100%", padding: "12px", fontSize: 15, marginTop: 8 }}
+            >创建房间</button>
+          </div>
+        )}
+
+        {/* 加入模式 */}
+        {mode === "join" && (
+          <div style={{ animation: "fade-in 200ms ease-out" }}>
+            <div style={inputGroupStyle}>
+              <label style={labelStyle}>房间号</label>
+              <input
+                placeholder="输入6位房间号..."
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                maxLength={6}
+                style={{ letterSpacing: 3, fontSize: 18, textAlign: "center", fontWeight: 700 }}
+              />
+            </div>
+            <button
+              className="btn-primary"
+              onClick={onJoin}
+              disabled={!nickname || !joinCode}
+              style={{ width: "100%", padding: "12px", fontSize: 15, marginTop: 8 }}
+            >加入房间</button>
+          </div>
+        )}
       </div>
-      {mode === "create" ? (
-        <div>
-          <label>真人位数：
-            <select value={humanSlots} onChange={(e) => setHumanSlots(e.target.value)}>
-              {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} 人 ({6-n} AI)</option>)}
-            </select>
-          </label>
-          <div><button onClick={onCreate} disabled={!nickname}>创建</button></div>
-        </div>
-      ) : (
-        <div>
-          <label>房间号：<input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} /></label>
-          <div><button onClick={onJoin} disabled={!nickname || !joinCode}>加入</button></div>
-        </div>
-      )}
     </div>
   );
 }
