@@ -7,9 +7,15 @@ const ACTION_LABELS = {
   day_vote_pk: "PK 投票", speech: "发言", last_words: "遗言",
 };
 
+function optionLabel(id, players) {
+  const p = players.find((pl) => pl.id === id);
+  return p ? `${p.nickname} (座${p.seat + 1})` : id;
+}
+
 export default function ActionModal() {
   const prompt = useGameStore((s) => s.promptAction);
   const sendAction = useGameStore((s) => s.sendAction);
+  const players = useGameStore((s) => s.players);
   const [target, setTarget] = useState("");
   const [text, setText] = useState("");
   if (!prompt) return null;
@@ -38,7 +44,7 @@ export default function ActionModal() {
             <p>目标：
               <select value={target} onChange={(e) => setTarget(e.target.value)}>
                 <option value="">-- 选择 --</option>
-                {prompt.options.map(o => <option key={o} value={o}>{o}</option>)}
+                {prompt.options.map(o => <option key={o} value={o}>{optionLabel(o, players)}</option>)}
               </select>
             </p>
             <div style={{ display: "flex", gap: 8 }}>
@@ -51,7 +57,7 @@ export default function ActionModal() {
           <>
             <select value={target} onChange={(e) => setTarget(e.target.value)}>
               <option value="">-- 选择目标 --</option>
-              {prompt.options.map(o => <option key={o} value={o}>{o}</option>)}
+              {prompt.options.map(o => <option key={o} value={o}>{optionLabel(o, players)}</option>)}
             </select>
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
               <button disabled={!target} onClick={() => submit(prompt.action, { target })}>确认</button>

@@ -9,7 +9,7 @@ import SystemLog from "../components/SystemLog.jsx";
 
 export default function Game() {
   const { roomCode, players, playerId, phase, day, deadlineTs,
-          isHost, startGame, gameOver } = useGameStore();
+          isHost, startGame, gameOver, myRole, seerResults } = useGameStore();
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 16, padding: 16 }}>
       <div>
@@ -20,6 +20,16 @@ export default function Game() {
           )}
         </div>
         <RoleBadge />
+        {myRole === "seer" && seerResults.length > 0 && (
+          <div style={{ padding: 8, background: "var(--bg-soft)", borderRadius: 8, marginBottom: 12, fontSize: 13 }}>
+            <strong>查验结果：</strong>
+            {seerResults.map((r, i) => (
+              <div key={i}>
+                {r.target_id} → {r.is_wolf ? "🔴 狼人" : "🟢 好人"}
+              </div>
+            ))}
+          </div>
+        )}
         <PhaseBanner phase={phase} day={day} deadlineTs={deadlineTs} />
         <RoundTable players={players} myId={playerId} />
         {gameOver && (
