@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable, Optional
 
 from app.game.constants import Role
 from app.game.events import GameEvent
@@ -18,8 +18,8 @@ class ActionPrompt:
 @dataclass
 class ActionResponse:
     action: str
-    target: str | None = None
-    text: str | None = None
+    target: Optional[str] = None
+    text: Optional[str] = None
 
 
 @runtime_checkable
