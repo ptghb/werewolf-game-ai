@@ -1,0 +1,21 @@
+:root {
+  --bg: #0b0d14;
+  --bg-soft: #161a25;
+  --fg: #e9ecf1;
+  --accent: #d4a574;
+  --danger: #c9464b;
+  --muted: #7f8699;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; background: var(--bg); color: var(--fg);
+  font-family: "PingFang SC", "Hiragino Sans GB", sans-serif; }
+
+button { cursor: pointer; background: var(--accent); color: #111;
+  border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; }
+button:hover { filter: brightness(1.08); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+input, select { background: var(--bg-soft); color: var(--fg);
+  border: 1px solid #2a2f3c; border-radius: 6px; padding: 8px; }
