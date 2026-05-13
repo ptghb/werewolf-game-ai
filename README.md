@@ -8,8 +8,9 @@
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+conda create -n werewolf python=3.9
+conda activate werewolf
+pip install -r requirements.txt
 cp .env.example .env   # 填入 SILICONFLOW_API_KEY
 uvicorn app.main:app --reload --port 8000
 ```
