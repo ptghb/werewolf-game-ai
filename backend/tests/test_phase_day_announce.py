@@ -59,6 +59,21 @@ async def test_peaceful_night():
 
 
 @pytest.mark.asyncio
+async def test_night_death_last_words_include_sender_nickname():
+    s, fakes = _state("p5", None, False)
+    p5_fake = next(f for f in fakes if f.id == "p5")
+    p5_fake.speech = "night farewell"
+    b = Broadcaster(s, fakes)
+
+    await run_day_announce(s, fakes, broadcaster=b, deadline_ts=9999999999)
+
+    p0_fake = next(f for f in fakes if f.id == "p0")
+    chats = [e for e in p0_fake.received if e.type == "chat_message"
+             and e.payload.get("from") == "p5"]
+    assert any(c.payload.get("from_name") == "n5" for c in chats)
+
+
+@pytest.mark.asyncio
 async def test_night_counters_reset_after_announce():
     s, fakes = _state("p5", None, False)
     b = Broadcaster(s, fakes)

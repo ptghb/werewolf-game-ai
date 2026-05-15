@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from app.main import app
+from app.main import app, manager
 
 
 def test_healthz():
@@ -25,6 +25,32 @@ def test_join_room_http():
     r2 = client.post(f"/api/rooms/{code}/join", json={"nickname": "bob"})
     assert r2.status_code == 200
     assert r2.json()["player_id"].startswith("h_")
+
+
+def test_websocket_chat_uses_server_authoritative_sender_identity():
+    client = TestClient(app)
+    r = client.post("/api/rooms", json={"nickname": "alice", "human_slots": 1, "ai_slots": 5})
+    body = r.json()
+    code = body["room_code"]
+    player_id = body["host_id"]
+
+    with client.websocket_connect("/ws") as ws:
+        ws.send_json({"type": "hello", "room": code, "player_id": player_id})
+        ws.receive_json()
+        ws.send_json({
+            "type": "chat",
+            "payload": {
+                "channel": "day",
+                "text": "hi",
+                "from": "spoofed-id",
+                "from_name": "spoofed-name",
+            },
+        })
+
+    room = manager.get_room(code)
+    queued = room.queue.get_nowait()
+    assert queued["from"] == player_id
+    assert queued["from_name"] == "alice"
 
 
 def test_join_unknown_room_404():

@@ -53,7 +53,7 @@ async def run_day_announce(
         if text:
             await broadcaster.broadcast(GameEvent(
                 type="chat_message",
-                payload={"from": pid, "text": text, "channel": "day", "last_words": True},
+                payload={"from": pid, "from_name": player.nickname, "text": text, "channel": "day", "last_words": True},
             ))
         state.get_player(pid).used_last_words = True
 

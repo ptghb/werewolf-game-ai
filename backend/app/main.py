@@ -114,7 +114,7 @@ async def ws_endpoint(ws: WebSocket):
             elif mtype == "action":
                 await player.deliver_action(payload)
             elif mtype == "chat":
-                await room.queue.put({"type": "chat", "from": player.id, **payload})
+                await room.queue.put({"type": "chat", **payload, "from": player.id, "from_name": player.nickname})
             elif mtype == "start_game":
                 if player.id == room.host_id:
                     asyncio.create_task(_run_game(room))

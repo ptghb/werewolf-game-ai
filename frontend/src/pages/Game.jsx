@@ -10,6 +10,8 @@ import SystemLog from "../components/SystemLog.jsx";
 export default function Game() {
   const { roomCode, players, playerId, phase, day, deadlineTs,
           isHost, startGame, gameOver, myRole, seerResults } = useGameStore();
+  const playerNameById = new Map(players.map((p) => [p.id, p.nickname]));
+  const displayName = (id) => playerNameById.get(id) || id;
 
   const pageStyle = {
     minHeight: "100vh",
@@ -114,7 +116,7 @@ export default function Game() {
                   <span className={`tag ${r.is_wolf ? "tag-wolf" : "tag-good"}`}>
                     {r.is_wolf ? "狼人" : "好人"}
                   </span>
-                  <span>{r.target_id}</span>
+                  <span>{displayName(r.target_id)}</span>
                 </div>
               ))}
             </div>
@@ -139,7 +141,7 @@ export default function Game() {
               <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
                 {Object.entries(gameOver.roles || {}).map(([id, role]) => (
                   <span key={id} className={`tag ${role === "werewolf" ? "tag-wolf" : "tag-good"}`}>
-                    {id}: {role === "werewolf" ? "狼人" : role === "seer" ? "预言家" : role === "witch" ? "女巫" : "平民"}
+                    {displayName(id)}: {role === "werewolf" ? "狼人" : role === "seer" ? "预言家" : role === "witch" ? "女巫" : "平民"}
                   </span>
                 ))}
               </div>

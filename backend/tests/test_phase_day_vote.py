@@ -87,3 +87,4 @@ async def test_eliminated_player_gets_last_words():
     chats = [e for e in p0_fake.received if e.type == "chat_message"
              and e.payload.get("from") == "p5"]
     assert any(c.payload.get("text") == "farewell" for c in chats)
+    assert any(c.payload.get("from_name") == "n5" for c in chats)

@@ -33,16 +33,19 @@ class RoomManager:
             host_id = f"h_{uuid.uuid4().hex[:8]}"
             host = HumanPlayer(id=host_id, nickname=host_nickname,
                                role=Role.VILLAGER, seat=0)
-            ai_players = [
-                AIPlayer(
+            ai_players = []
+            nickname_counts: Dict[str, int] = {}
+            for i in range(ai_slots):
+                persona = random_persona()
+                nickname_counts[persona.name] = nickname_counts.get(persona.name, 0) + 1
+                nickname = persona.name if nickname_counts[persona.name] == 1 else f"{persona.name}{nickname_counts[persona.name]}"
+                ai_players.append(AIPlayer(
                     id=f"ai_{uuid.uuid4().hex[:8]}",
-                    nickname=f"AI-{i+1}",
+                    nickname=nickname,
                     role=Role.VILLAGER,  # reassigned at game start
                     seat=human_slots + i,
-                    persona=random_persona(),
-                )
-                for i in range(ai_slots)
-            ]
+                    persona=persona,
+                ))
             room = Room(code=code, host_id=host_id,
                         human_slots=human_slots, ai_slots=ai_slots,
                         players=[host, *ai_players], created_at=time.time())

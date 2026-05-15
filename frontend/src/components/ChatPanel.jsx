@@ -78,7 +78,7 @@ export default function ChatPanel() {
             background: m.last_words ? "var(--surface)" : "transparent",
           }}>
             <span style={{ fontWeight: 600, color: "var(--accent)" }}>
-              {m.from}
+              {m.from_name || m.from}
             </span>
             <span style={{ color: "var(--fg-secondary)", marginLeft: 4 }}>
               {m.text}

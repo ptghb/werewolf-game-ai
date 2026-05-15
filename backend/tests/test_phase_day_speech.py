@@ -69,3 +69,18 @@ async def test_empty_speech_skipped_in_broadcast():
     assert "hello" in texts
     assert "hi" in texts
     assert "" not in texts
+
+
+@pytest.mark.asyncio
+async def test_day_speech_includes_sender_nickname():
+    state, fakes = _setup({"p0": "hello"})
+    for p in state.players:
+        p.alive = p.id == "p0"
+    b = Broadcaster(state, fakes)
+
+    await run_day_speech(state, fakes, broadcaster=b,
+                         start_player_id="p0", per_player_timeout=5)
+
+    chat = next(e for e in fakes[0].received if e.type == "chat_message")
+    assert chat.payload["from"] == "p0"
+    assert chat.payload["from_name"] == "n0"

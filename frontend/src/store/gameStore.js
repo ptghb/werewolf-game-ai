@@ -40,7 +40,8 @@ const useGameStore = create((set, get) => ({
     } else if (type === "system_announce") {
       set((s) => ({ systemLog: [...s.systemLog, payload.text] }));
     } else if (type === "death_announce") {
-      const line = payload.dead.length ? `死亡：${payload.dead.join(", ")} (${payload.reason})` : "昨夜平安夜";
+      const names = payload.dead.map((id) => get().players.find((p) => p.id === id)?.nickname || id);
+      const line = names.length ? `死亡：${names.join(", ")} (${payload.reason})` : "昨夜平安夜";
       set((s) => ({
         systemLog: [...s.systemLog, line],
         players: s.players.map((p) => payload.dead.includes(p.id) ? { ...p, alive: false } : p),

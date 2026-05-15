@@ -53,7 +53,7 @@ async def run_day_speech(
         if text:
             await broadcaster.broadcast(GameEvent(
                 type="chat_message",
-                payload={"from": pid, "text": text, "channel": "day"},
+                payload={"from": pid, "from_name": speaker.nickname, "text": text, "channel": "day"},
             ))
     return order
 

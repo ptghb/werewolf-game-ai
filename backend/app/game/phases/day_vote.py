@@ -86,7 +86,7 @@ async def run_day_vote(
             if text:
                 await broadcaster.broadcast(GameEvent(
                     type="chat_message",
-                    payload={"from": eliminated, "text": text, "channel": "day", "last_words": True},
+                    payload={"from": eliminated, "from_name": speaker.nickname, "text": text, "channel": "day", "last_words": True},
                 ))
             if victim:
                 victim.used_last_words = True
