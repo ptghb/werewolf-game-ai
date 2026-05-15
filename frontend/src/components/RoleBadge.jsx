@@ -10,8 +10,11 @@ const ROLE_COLORS = {
 };
 
 export default function RoleBadge() {
-  const { myRole, wolfTeammates } = useGameStore();
+  const { myRole, wolfTeammates, players } = useGameStore();
   if (!myRole) return null;
+
+  const playerNameById = new Map(players.map((p) => [p.id, p.nickname]));
+  const teammateNames = wolfTeammates.map((id) => playerNameById.get(id) || id);
 
   return (
     <div className="card" style={{
@@ -34,7 +37,7 @@ export default function RoleBadge() {
         <div style={{ fontSize: 13, fontWeight: 600 }}>{ROLE_LABELS[myRole]}</div>
         {wolfTeammates?.length > 0 && (
           <div style={{ fontSize: 11, color: "var(--fg-muted)", marginTop: 2 }}>
-            狼队友：{wolfTeammates.join(", ")}
+            狼队友：{teammateNames.join(", ")}
           </div>
         )}
       </div>
