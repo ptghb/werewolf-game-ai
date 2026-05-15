@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import random
 import time
 from typing import Iterable
@@ -16,6 +17,9 @@ from app.game.phases.night_wolf import run_wolf_kill
 from app.game.state import GameState, PlayerState
 from app.game.win_check import check_winner
 from app.players.base import Player
+
+
+logger = logging.getLogger("werewolf.game")
 
 
 DEFAULT_TIMEOUTS = {
@@ -61,7 +65,9 @@ class GameEngine:
         return time.time() + self.phase_timeouts[key]
 
     async def run_one_round(self) -> None:
+        logger.info("========== 第 %d 天 ==========", self.state.day_number + 1)
         self.state.phase = Phase.NIGHT_START
+        logger.info("天黑 | day=%d", self.state.day_number + 1)
         await self.broadcaster.broadcast(GameEvent(
             type="system_announce",
             payload={"text": "天黑请闭眼"},
@@ -117,11 +123,16 @@ class GameEngine:
 
     def _resolve_winner(self) -> bool:
         self.state.phase = Phase.CHECK_WIN
+        alive_players = [{"id": p.id, "nickname": p.nickname, "role": p.role.value, "is_ai": p.is_ai}
+                         for p in self.state.alive_players()]
+        logger.info("存活玩家 | %s", alive_players)
+
         winner = check_winner(self.state)
         if winner is None:
             return False
         self.winner = winner.value
         self.state.phase = Phase.GAME_OVER
+        logger.info("胜负判定 | winner=%s", winner.value)
         return True
 
     async def run_until_game_over(self, max_rounds: int = 20) -> None:
@@ -133,6 +144,10 @@ class GameEngine:
         await self._broadcast_game_over()
 
     async def _broadcast_game_over(self) -> None:
+        logger.info("游戏结束 | winner=%s", self.winner)
+        role_snapshot = {p.id: {"nickname": p.nickname, "role": p.role.value, "is_ai": p.is_ai}
+                         for p in self.state.players}
+        logger.info("最终角色 | %s", role_snapshot)
         await self.broadcaster.broadcast(GameEvent(
             type="game_over",
             payload={

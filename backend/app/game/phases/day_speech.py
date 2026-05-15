@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from typing import Iterable
 
@@ -8,6 +9,9 @@ from app.game.constants import Phase
 from app.game.events import GameEvent
 from app.game.state import GameState
 from app.players.base import ActionPrompt, Player
+
+
+logger = logging.getLogger("werewolf.game.phase")
 
 
 async def run_day_speech(
@@ -33,6 +37,8 @@ async def run_day_speech(
         seats = [p.seat for p in alive]
         start_idx = next((i for i, seat in enumerate(seats) if seat >= start_seat), 0)
     order = ids_in_seat_order[start_idx:] + ids_in_seat_order[:start_idx]
+
+    logger.info("阶段开始 | 白天发言 | day=%d | 发言顺序=%s", state.day_number, order)
 
     await broadcaster.broadcast(GameEvent(
         type="phase_change",

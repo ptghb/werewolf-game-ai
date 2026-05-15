@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Iterable
 
 from app.game.broadcaster import Broadcaster
@@ -7,6 +8,9 @@ from app.game.constants import Phase
 from app.game.events import GameEvent
 from app.game.state import GameState
 from app.players.base import ActionPrompt, Player
+
+
+logger = logging.getLogger("werewolf.game.phase")
 
 
 async def run_day_announce(
@@ -18,6 +22,7 @@ async def run_day_announce(
 ) -> list[str]:
     state.phase = Phase.DAY_ANNOUNCE
     state.day_number += 1
+    logger.info("========== 天亮 | 第 %d 天 ==========", state.day_number)
     await broadcaster.broadcast(GameEvent(
         type="phase_change", payload={"phase": "day_announce", "day": state.day_number,
                                       "deadline_ts": deadline_ts},
@@ -34,6 +39,9 @@ async def run_day_announce(
         p = state.get_player(pid)
         if p and p.alive:
             p.alive = False
+
+    logger.info("死亡公告 | night_killed=%s | saved=%s | poisoned=%s | dead=%s",
+                killed, state.tonight_saved_by_witch, poisoned, dead_ids)
 
     await broadcaster.broadcast(GameEvent(
         type="death_announce",

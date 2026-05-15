@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import random
 from dataclasses import dataclass, field
 
@@ -12,6 +13,9 @@ from app.ai.tools import tools_for_action
 from app.game.constants import LLM_CALL_TIMEOUT, Role
 from app.game.events import GameEvent
 from app.players.base import ActionPrompt, ActionResponse
+
+
+logger = logging.getLogger("werewolf.player.ai")
 
 
 MAX_LLM_RETRIES = 2
@@ -94,21 +98,69 @@ class AIPlayer:
             return False
         return True
 
+    async def _log_decision(self, prompt: ActionPrompt, resp: ActionResponse) -> None:
+        player_info = f"AI[{self.nickname}({self.id})]"
+        action = resp.action or prompt.action
+        if action in ("speech", "speak", "last_words"):
+            logger.info("发言 | %s | text=\"%s\"", player_info, resp.text or "")
+        elif action == "wolf_vote":
+            logger.info("狼人投票 | %s | target=%s", player_info, resp.target or "无")
+        elif action == "seer_check":
+            if resp.target:
+                logger.info("预言家查验 | %s | target=%s", player_info, resp.target)
+            else:
+                logger.info("预言家查验 | %s | 跳过", player_info)
+        elif action == "witch_save":
+            logger.info("女巫救药 | %s | target=%s", player_info, resp.target)
+        elif action == "witch_poison":
+            logger.info("女巫毒药 | %s | target=%s", player_info, resp.target)
+        elif action == "witch_skip":
+            logger.info("女巫跳过 | %s", player_info)
+        elif action == "day_vote":
+            logger.info("白天投票 | %s | target=%s", player_info, resp.target or "弃票")
+        elif action == "day_abstain":
+            logger.info("白天投票 | %s | 弃权", player_info)
+        elif action == "day_vote_pk":
+            logger.info("PK投票 | %s | target=%s", player_info, resp.target or "弃票")
+        else:
+            logger.info("决策 | %s | action=%s | target=%s | text=\"%s\"",
+                        player_info, action, resp.target or "", (resp.text or "")[:50])
+
     async def request(self, prompt: ActionPrompt) -> ActionResponse:
-        for _ in range(MAX_LLM_RETRIES + 1):
+        player_info = f"AI[{self.nickname}({self.id})]"
+        logger.info("收到决策请求 | %s | action=%s | options=%s | hint=%s",
+                    player_info, prompt.action, prompt.options, prompt.hint)
+
+        for attempt in range(MAX_LLM_RETRIES + 1):
             resp = await self._single_llm_call(prompt)
-            if self._is_valid(prompt, resp):
+            valid = self._is_valid(prompt, resp)
+            logger.debug("LLM调用 | %s | attempt=%d | valid=%s | resp=%s",
+                         player_info, attempt + 1, valid, resp)
+            if valid:
+                await self._log_decision(prompt, resp)
                 return resp
 
+        logger.warning("LLM调用全部失败 | %s | action=%s | 使用默认回退", player_info, prompt.action)
+
         if prompt.action in ("speech", "speak", "last_words"):
-            return ActionResponse(action=prompt.action, text="(沉默)")
+            resp = ActionResponse(action=prompt.action, text="(沉默)")
+            await self._log_decision(prompt, resp)
+            return resp
         if prompt.action == "seer_check":
-            return ActionResponse(action="seer_skip")
+            resp = ActionResponse(action="seer_skip")
+            await self._log_decision(prompt, resp)
+            return resp
         if prompt.action == "witch_action":
-            return ActionResponse(action="witch_skip")
+            resp = ActionResponse(action="witch_skip")
+            await self._log_decision(prompt, resp)
+            return resp
         if prompt.action == "day_vote":
-            return ActionResponse(action="day_abstain")
-        return ActionResponse(action=prompt.action, target=self._default_target(prompt.options))
+            resp = ActionResponse(action="day_abstain")
+            await self._log_decision(prompt, resp)
+            return resp
+        resp = ActionResponse(action=prompt.action, target=self._default_target(prompt.options))
+        await self._log_decision(prompt, resp)
+        return resp
 
 
 __all__ = ["AIPlayer"]

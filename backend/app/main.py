@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import random
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -15,6 +16,14 @@ from app.game.events import GameEvent
 from app.players.ai import AIPlayer
 from app.ai.llm import build_llm
 from app.rooms.room_manager import RoomManager
+
+
+logger = logging.getLogger("werewolf")
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 app = FastAPI(title="Werewolf AI Backend")
@@ -123,12 +132,18 @@ async def ws_endpoint(ws: WebSocket):
 
 
 async def _run_game(room) -> None:
+    logger.info("游戏开始 | room=%s | players=%s",
+                room.code,
+                [{"id": p.id, "nickname": p.nickname, "type": "AI" if p.is_ai else "Human"}
+                 for p in room.players])
     try:
         # Assign roles
         roles = assign_roles(6)
         wolf_ids = []
         for player, role in zip(room.players, roles):
             player.role = role
+            logger.info("角色分配 | player=%s(%s) | seat=%s | role=%s",
+                        player.id, player.nickname, player.seat, role.value)
             if role == Role.WEREWOLF:
                 wolf_ids.append(player.id)
         for p in room.players:
@@ -162,10 +177,10 @@ async def _run_game(room) -> None:
 
         engine = GameEngine(room_code=room.code, players=room.players, start_player_id=start_id)
         await engine.run_until_game_over()
+        logger.info("游戏结束 | room=%s | winner=%s", room.code, engine.winner)
     except Exception as e:
         import traceback
-        print(f"[_run_game] ERROR: {e}\n{traceback.format_exc()}")
-        # Notify players that something went wrong
+        logger.error("游戏运行异常", exc_info=True)
         for p in room.players:
             try:
                 await p.notify(GameEvent(
