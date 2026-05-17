@@ -60,7 +60,7 @@ async def run_day_vote(
     pk_used = False
     if vote_result.kind == "winner":
         eliminated = vote_result.winner
-        logger.info("投票结果 | 出局=%s | 得票=%d", eliminated, vote_result.count)
+        logger.info("投票结果 | 出局=%s | 得票=%d", eliminated, vote_result.counts.get(eliminated, 0))
     elif vote_result.kind == "tie":
         pk_used = True
         candidates = vote_result.tied_candidates
@@ -76,7 +76,7 @@ async def run_day_vote(
         pk_result = tally_votes(pk_votes)
         if pk_result.kind == "winner":
             eliminated = pk_result.winner
-            logger.info("PK结果 | 出局=%s | 得票=%d", eliminated, pk_result.count)
+            logger.info("PK结果 | 出局=%s | 得票=%d", eliminated, pk_result.counts.get(eliminated, 0))
         else:
             logger.info("PK仍平局，无人出局 | candidates=%s", pk_result.tied_candidates)
     else:

@@ -29,8 +29,9 @@ class Channel(str, Enum):
 
 
 SIX_PLAYER_ROLES: list[Role] = [
-    Role.WEREWOLF, Role.WEREWOLF, Role.WEREWOLF,
-    Role.WITCH, Role.SEER, Role.VILLAGER,
+    Role.WEREWOLF, Role.WEREWOLF,
+    Role.WITCH, Role.SEER,
+    Role.VILLAGER, Role.VILLAGER,
 ]
 
 WOLF_KILL_TIMEOUT = 45

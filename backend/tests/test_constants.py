@@ -6,13 +6,13 @@ def test_roles_exist():
     assert Role.SEER
     assert Role.VILLAGER
 
-def test_six_player_roles_has_three_wolves_one_witch_one_seer_one_villager():
+def test_six_player_roles_has_two_wolves_one_witch_one_seer_two_villagers():
     counts = {r: SIX_PLAYER_ROLES.count(r) for r in set(SIX_PLAYER_ROLES)}
     assert len(SIX_PLAYER_ROLES) == 6
-    assert counts[Role.WEREWOLF] == 3
+    assert counts[Role.WEREWOLF] == 2
     assert counts[Role.WITCH] == 1
     assert counts[Role.SEER] == 1
-    assert counts[Role.VILLAGER] == 1
+    assert counts[Role.VILLAGER] == 2
 
 def test_phase_enum_has_all_phases():
     for name in ["LOBBY", "ROLE_ASSIGN", "NIGHT_START", "WOLF_KILL",

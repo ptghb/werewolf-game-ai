@@ -5,7 +5,6 @@ import ChatPanel from "../components/ChatPanel.jsx";
 import PhaseBanner from "../components/PhaseBanner.jsx";
 import ActionModal from "../components/ActionModal.jsx";
 import RoleBadge from "../components/RoleBadge.jsx";
-import SystemLog from "../components/SystemLog.jsx";
 
 export default function Game() {
   const { roomCode, players, playerId, phase, day, deadlineTs,
@@ -80,7 +79,7 @@ export default function Game() {
       {/* 主内容区 - 响应式网格 */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "1fr 340px",
+        gridTemplateColumns: "600px 1fr",
         gap: 16,
         padding: "16px 24px 24px",
         maxWidth: 1400,
@@ -88,7 +87,7 @@ export default function Game() {
         position: "relative",
         zIndex: 1,
       }}>
-        {/* 左侧 - 游戏主区域 */}
+        {/* 左侧 - 游戏主区域（信息条 + 圆桌等） */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {/* 信息条 */}
           <div style={{
@@ -149,9 +148,8 @@ export default function Game() {
           )}
         </div>
 
-        {/* 右侧 - 信息面板 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
-          <SystemLog />
+        {/* 右侧 - 聊天面板 */}
+        <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
           <ChatPanel />
         </div>
       </div>

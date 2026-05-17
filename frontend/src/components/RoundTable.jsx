@@ -2,10 +2,10 @@ import React from "react";
 import PlayerSeat from "./PlayerSeat.jsx";
 
 export default function RoundTable({ players, myId }) {
-  const radius = 160;
-  const cx = 200;
-  const cy = 200;
-  const size = 420;
+  const radius = 230;
+  const cx = 290;
+  const cy = 290;
+  const size = 600;
 
   return (
     <div className="card" style={{

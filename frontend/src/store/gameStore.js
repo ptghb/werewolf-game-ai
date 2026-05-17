@@ -12,6 +12,7 @@ const useGameStore = create((set, get) => ({
   deadlineTs: null,
   chat: [],          // [{channel, from, text, last_words?}]
   systemLog: [],     // announcements
+  messageLog: [],    // unified timeline: [{type:"chat"|"system", ...}]
   myRole: null,
   wolfTeammates: [],
   seerResults: [],   // [{target_id, is_wolf}]
@@ -36,14 +37,17 @@ const useGameStore = create((set, get) => ({
     } else if (type === "prompt_action") {
       set({ promptAction: payload });
     } else if (type === "chat_message") {
-      set((s) => ({ chat: [...s.chat, payload] }));
+      set((s) => ({ chat: [...s.chat, payload],
+                    messageLog: [...s.messageLog, { type: "chat", ...payload }] }));
     } else if (type === "system_announce") {
-      set((s) => ({ systemLog: [...s.systemLog, payload.text] }));
+      set((s) => ({ systemLog: [...s.systemLog, payload.text],
+                    messageLog: [...s.messageLog, { type: "system", text: payload.text }] }));
     } else if (type === "death_announce") {
       const names = payload.dead.map((id) => get().players.find((p) => p.id === id)?.nickname || id);
       const line = names.length ? `死亡：${names.join(", ")} (${payload.reason})` : "昨夜平安夜";
       set((s) => ({
         systemLog: [...s.systemLog, line],
+        messageLog: [...s.messageLog, { type: "system", text: line }],
         players: s.players.map((p) => payload.dead.includes(p.id) ? { ...p, alive: false } : p),
       }));
     } else if (type === "seer_result") {
