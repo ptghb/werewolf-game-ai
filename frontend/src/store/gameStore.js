@@ -44,12 +44,18 @@ const useGameStore = create((set, get) => ({
                     messageLog: [...s.messageLog, { type: "system", text: payload.text }] }));
     } else if (type === "death_announce") {
       const names = payload.dead.map((id) => get().players.find((p) => p.id === id)?.nickname || id);
-      const line = names.length ? `死亡：${names.join(", ")} (${payload.reason})` : "昨夜平安夜";
-      set((s) => ({
-        systemLog: [...s.systemLog, line],
-        messageLog: [...s.messageLog, { type: "system", text: line }],
-        players: s.players.map((p) => payload.dead.includes(p.id) ? { ...p, alive: false } : p),
-      }));
+      set((s) => {
+        const updatedPlayers = s.players.map((p) => payload.dead.includes(p.id) ? { ...p, alive: false } : p);
+        const aliveNames = updatedPlayers.filter((p) => p.alive).map((p) => p.nickname);
+        const line = names.length
+          ? `死亡：${names.join(", ")}  |  存活：${aliveNames.join(", ")}`
+          : `昨夜平安夜  |  存活：${aliveNames.join(", ")}`;
+        return {
+          systemLog: [...s.systemLog, line],
+          messageLog: [...s.messageLog, { type: "system", text: line }],
+          players: updatedPlayers,
+        };
+      });
     } else if (type === "seer_result") {
       set((s) => ({ seerResults: [...s.seerResults, payload] }));
     } else if (type === "witch_info") {
