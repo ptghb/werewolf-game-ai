@@ -41,8 +41,20 @@ class AIPlayer:
     async def notify(self, event: GameEvent) -> None:
         self.memory.append(event)
 
-    def _memory_text(self) -> str:
-        lines = [f"[{event.type}] {event.payload}" for event in self.memory[-40:]]
+    def _memory_text(self, nickname_map: dict[str, str]) -> str:
+        def _replace_ids(val: object) -> object:
+            if isinstance(val, str) and val in nickname_map:
+                return f"{nickname_map[val]}({val})"
+            if isinstance(val, list):
+                return [_replace_ids(v) for v in val]
+            if isinstance(val, dict):
+                return {k: _replace_ids(v) for k, v in val.items()}
+            return val
+
+        lines = []
+        for event in self.memory[-40:]:
+            cleaned = _replace_ids(event.payload)
+            lines.append(f"[{event.type}] {cleaned}")
         return "\n".join(lines) or "(no prior events)"
 
     async def _single_llm_call(self, prompt: ActionPrompt) -> ActionResponse | None:
@@ -50,13 +62,13 @@ class AIPlayer:
             return None
         tools = tools_for_action(prompt.action, prompt.options, prompt.nickname_map)
         llm = self.llm.bind_tools(tools) if tools else self.llm
-        sys_prompt = build_system_prompt(self.role, self.persona, self.wolf_teammates, prompt.nickname_map)
+        sys_prompt = build_system_prompt(self.role, self.persona, self.wolf_teammates, prompt.nickname_map, self.id, self.nickname)
         options_display = [f"{prompt.nickname_map.get(oid, oid)}({oid})" for oid in prompt.options]
         user_msg = (
             f"当前阶段：{prompt.action}\n"
             f"可选目标：{options_display}\n"
             f"提示：{prompt.hint}\n\n"
-            f"历史事件：\n{self._memory_text()}\n\n"
+            f"历史事件：\n{self._memory_text(prompt.nickname_map)}\n\n"
             f"请通过 function calling 作出决策。"
             f"target_id 参数请填入玩家的 id（括号内的部分）。"
         )

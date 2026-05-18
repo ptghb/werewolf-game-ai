@@ -25,14 +25,19 @@ def build_system_prompt(
     persona: Persona,
     wolf_teammates: list[str],
     nickname_map: dict[str, str] | None = None,
+    self_id: str | None = None,
+    self_nickname: str | None = None,
 ) -> str:
+    self_line = ""
+    if self_id and self_nickname:
+        self_line = f"\n你的身份：{self_nickname}({self_id})。"
     teammate_line = ""
     if role == Role.WEREWOLF and wolf_teammates:
         names = [f"{nickname_map.get(tid, tid)}({tid})" if nickname_map else tid for tid in wolf_teammates]
         teammate_line = f"\n你的狼队友：{', '.join(names)}。"
     return (
         f"{RULES_SUMMARY}\n\n"
-        f"{ROLE_DESCRIPTIONS[role]}{teammate_line}\n\n"
+        f"{ROLE_DESCRIPTIONS[role]}{self_line}{teammate_line}\n\n"
         f"你的人设：{persona.name} — {persona.style}。\n"
         f"发言时严格控制在 80 汉字以内；保持人设一致。"
     )
