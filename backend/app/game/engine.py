@@ -6,11 +6,12 @@ import time
 from typing import Iterable
 
 from app.game.broadcaster import Broadcaster
-from app.game.constants import Phase
+from app.game.constants import Phase, Role
 from app.game.events import GameEvent
 from app.game.phases.day_announce import run_day_announce
 from app.game.phases.day_speech import run_day_speech
 from app.game.phases.day_vote import run_day_vote
+from app.game.phases.hunter_shot import run_hunter_shot
 from app.game.phases.night_seer import run_seer_check
 from app.game.phases.night_witch import run_witch_action
 from app.game.phases.night_wolf import run_wolf_kill
@@ -29,6 +30,7 @@ DEFAULT_TIMEOUTS = {
     "day_announce": 5,
     "day_speech": 60,
     "day_vote": 30,
+    "hunter_shot": 30,
     "last_words": 30,
 }
 
@@ -98,6 +100,21 @@ class GameEngine:
             broadcaster=self.broadcaster,
             deadline_ts=self._deadline("day_announce"),
         )
+
+        # Check if hunter was killed by wolves (not poisoned)
+        if self.state.tonight_killed_by_wolves:
+            killed_player = self.state.get_player(self.state.tonight_killed_by_wolves)
+            if killed_player and killed_player.role == Role.HUNTER:
+                self.state.hunter_just_died = True
+                self.state.last_death_reason = "wolf"
+        await run_hunter_shot(
+            self.state,
+            self.players,
+            broadcaster=self.broadcaster,
+            deadline_ts=self._deadline("hunter_shot"),
+        )
+        self.state.hunter_just_died = False
+
         if self._resolve_winner():
             return
 
@@ -113,12 +130,24 @@ class GameEngine:
             start_player_id=start,
             per_player_timeout=self.phase_timeouts["day_speech"],
         )
-        await run_day_vote(
+        result = await run_day_vote(
             self.state,
             self.players,
             broadcaster=self.broadcaster,
             deadline_ts=self._deadline("day_vote"),
         )
+        if result.get("eliminated"):
+            eliminated_player = self.state.get_player(result["eliminated"])
+            if eliminated_player and eliminated_player.role == Role.HUNTER:
+                self.state.hunter_just_died = True
+                self.state.last_death_reason = "vote"
+            await run_hunter_shot(
+                self.state,
+                self.players,
+                broadcaster=self.broadcaster,
+                deadline_ts=self._deadline("hunter_shot"),
+            )
+            self.state.hunter_just_died = False
         self._resolve_winner()
 
     def _resolve_winner(self) -> bool:
