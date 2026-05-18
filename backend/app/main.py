@@ -5,6 +5,8 @@ import json
 import logging
 import random
 
+import os
+
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -189,3 +191,13 @@ async def _run_game(room) -> None:
                 ))
             except Exception:
                 pass
+
+
+def main():
+    import uvicorn
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
+
+
+if __name__ == "__main__":
+    main()
