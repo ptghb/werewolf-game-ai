@@ -37,8 +37,7 @@ manager = RoomManager()
 
 class CreateRoomBody(BaseModel):
     nickname: str
-    human_slots: int = 1
-    ai_slots: int = 5
+    mode: str = "6"
 
 
 class JoinRoomBody(BaseModel):
@@ -55,8 +54,7 @@ async def create_room(body: CreateRoomBody):
     try:
         room = await manager.create_room(
             host_nickname=body.nickname,
-            human_slots=body.human_slots,
-            ai_slots=body.ai_slots,
+            mode=body.mode,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -140,7 +138,7 @@ async def _run_game(room) -> None:
                  for p in room.players])
     try:
         # Assign roles
-        roles = assign_roles(6)
+        roles = assign_roles(len(room.players))
         wolf_ids = []
         for player, role in zip(room.players, roles):
             player.role = role

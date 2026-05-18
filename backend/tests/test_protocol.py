@@ -11,7 +11,7 @@ from app.protocol import (
 def test_create_room_roundtrip():
     msg = ClientMessage(
         type="create_room",
-        payload=CreateRoomPayload(nickname="alice", human_slots=1, ai_slots=5),
+        payload=CreateRoomPayload(nickname="alice", mode="6"),
         room=None, seq=1,
     )
     data = msg.model_dump()

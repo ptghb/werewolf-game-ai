@@ -16,7 +16,7 @@ def test_python_works():
 async def test_ai_players_get_persona_nicknames():
     manager = RoomManager()
 
-    room = await manager.create_room(host_nickname="房主", human_slots=1, ai_slots=5)
+    room = await manager.create_room(host_nickname="房主", mode="6")
 
     ai_nicknames = [p.nickname for p in room.players if p.is_ai]
     assert len(ai_nicknames) == 5

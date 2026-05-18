@@ -23,9 +23,15 @@ class RoomManager:
         self._rooms: Dict[str, Room] = {}
         self._lock = Lock()
 
-    async def create_room(self, *, host_nickname: str, human_slots: int, ai_slots: int) -> Room:
-        if human_slots + ai_slots != 6:
-            raise ValueError("Only 6-player rooms supported")
+    async def create_room(self, *, host_nickname: str, mode: str = "6") -> Room:
+        if mode == "6":
+            total = 6
+            ai_slots = 5
+        elif mode == "9":
+            total = 9
+            ai_slots = 8
+        else:
+            raise ValueError(f"Invalid mode: {mode}")
         async with self._lock:
             code = _new_code()
             while code in self._rooms:
@@ -43,11 +49,11 @@ class RoomManager:
                     id=f"ai_{uuid.uuid4().hex[:8]}",
                     nickname=nickname,
                     role=Role.VILLAGER,  # reassigned at game start
-                    seat=human_slots + i,
+                    seat=1 + i,  # seat 0 is host
                     persona=persona,
                 ))
             room = Room(code=code, host_id=host_id,
-                        human_slots=human_slots, ai_slots=ai_slots,
+                        human_slots=1, ai_slots=ai_slots,
                         players=[host, *ai_players], created_at=time.time())
             self._rooms[code] = room
             return room

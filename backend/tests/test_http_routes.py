@@ -11,25 +11,24 @@ def test_healthz():
 
 def test_create_room_http():
     client = TestClient(app)
-    r = client.post("/api/rooms", json={"nickname": "alice", "human_slots": 1, "ai_slots": 5})
+    r = client.post("/api/rooms", json={"nickname": "alice", "mode": "6"})
     assert r.status_code == 200
     body = r.json()
     assert "room_code" in body
     assert body["host_id"].startswith("h_")
 
 
-def test_join_room_http():
+def test_join_full_room_returns_409():
     client = TestClient(app)
-    r = client.post("/api/rooms", json={"nickname": "alice", "human_slots": 2, "ai_slots": 4})
+    r = client.post("/api/rooms", json={"nickname": "alice", "mode": "6"})
     code = r.json()["room_code"]
     r2 = client.post(f"/api/rooms/{code}/join", json={"nickname": "bob"})
-    assert r2.status_code == 200
-    assert r2.json()["player_id"].startswith("h_")
+    assert r2.status_code == 409
 
 
 def test_websocket_chat_uses_server_authoritative_sender_identity():
     client = TestClient(app)
-    r = client.post("/api/rooms", json={"nickname": "alice", "human_slots": 1, "ai_slots": 5})
+    r = client.post("/api/rooms", json={"nickname": "alice", "mode": "6"})
     body = r.json()
     code = body["room_code"]
     player_id = body["host_id"]

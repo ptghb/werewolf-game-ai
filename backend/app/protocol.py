@@ -9,8 +9,7 @@ from pydantic import BaseModel, Field
 
 class CreateRoomPayload(BaseModel):
     nickname: str
-    human_slots: int = 1
-    ai_slots: int = 5
+    mode: str = "6"
 
 
 class JoinRoomPayload(BaseModel):
