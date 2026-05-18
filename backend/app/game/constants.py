@@ -6,6 +6,7 @@ class Role(str, Enum):
     WITCH = "witch"
     SEER = "seer"
     VILLAGER = "villager"
+    HUNTER = "hunter"
 
 
 class Phase(str, Enum):
@@ -18,6 +19,7 @@ class Phase(str, Enum):
     DAY_ANNOUNCE = "day_announce"
     DAY_SPEECH = "day_speech"
     DAY_VOTE = "day_vote"
+    HUNTER_SHOT = "hunter_shot"
     CHECK_WIN = "check_win"
     GAME_OVER = "game_over"
 
@@ -34,6 +36,12 @@ SIX_PLAYER_ROLES: list[Role] = [
     Role.VILLAGER, Role.VILLAGER,
 ]
 
+NINE_PLAYER_ROLES: list[Role] = [
+    Role.WEREWOLF, Role.WEREWOLF, Role.WEREWOLF,
+    Role.VILLAGER, Role.VILLAGER, Role.VILLAGER,
+    Role.SEER, Role.WITCH, Role.HUNTER,
+]
+
 WOLF_KILL_TIMEOUT = 45
 SEER_CHECK_TIMEOUT = 20
 WITCH_ACTION_TIMEOUT = 25
@@ -42,3 +50,4 @@ DAY_VOTE_TIMEOUT = 30
 LAST_WORDS_TIMEOUT = 30
 RECONNECT_GRACE_SECONDS = 30
 LLM_CALL_TIMEOUT = 30
+HUNTER_SHOT_TIMEOUT = 30
