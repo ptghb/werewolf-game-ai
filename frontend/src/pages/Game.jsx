@@ -79,7 +79,7 @@ export default function Game() {
       {/* 主内容区 - 响应式网格 */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "600px 1fr",
+        gridTemplateColumns: "50% 1fr",
         gap: 16,
         padding: "16px 24px 24px",
         maxWidth: 1400,

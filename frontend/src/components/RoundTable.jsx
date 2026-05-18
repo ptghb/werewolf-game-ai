@@ -11,7 +11,7 @@ export default function RoundTable({ players, myId }) {
     <div className="card" style={{
       position: "relative",
       width: "100%",
-      maxWidth: size,
+      maxWidth: "100%",
       height: size,
       margin: "0 auto",
       overflow: "hidden",

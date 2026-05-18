@@ -53,7 +53,8 @@ export default function ChatPanel() {
           m.type === "system" ? (
             <div key={i} style={{
               fontSize: 12, lineHeight: 1.5,
-              color: "var(--fg-muted)",
+              color: "var(--fg-primary)",
+              opacity: 0.7,
               padding: "4px 8px",
               borderLeft: "2px solid var(--border)",
               background: "var(--surface)",
@@ -64,7 +65,7 @@ export default function ChatPanel() {
           ) : (
             <div key={i} style={{
               fontSize: 12, lineHeight: 1.5,
-              opacity: m.last_words ? 0.6 : 1,
+              opacity: m.last_words ? 0.85 : 1,
               padding: "4px 6px",
               borderRadius: "var(--radius-sm)",
               background: m.last_words ? "var(--surface)" : "transparent",
@@ -72,7 +73,7 @@ export default function ChatPanel() {
               <span style={{ fontWeight: 600, color: "var(--accent)" }}>
                 {m.from_name || m.from}
               </span>
-              <span style={{ color: "var(--fg-secondary)", marginLeft: 4 }}>
+              <span style={{ color: "var(--fg-primary)", marginLeft: 4 }}>
                 {m.text}
               </span>
               {m.last_words && (
