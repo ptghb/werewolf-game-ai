@@ -38,15 +38,19 @@ async def run_witch_action(
         type="witch_info",
         payload={
             "tonight_killed": state.tonight_killed_by_wolves,
+            "tonight_killed_name": (state.get_player(state.tonight_killed_by_wolves).nickname
+                                     if state.tonight_killed_by_wolves else None),
             "save_left": state.witch.save_left,
             "poison_left": state.witch.poison_left,
         },
         audience=f"player:{witch.id}",
     ))
     options = [p.id for p in state.alive_players()]
+    nickname_map = {p.id: p.nickname for p in state.players}
     resp = await witch.request(ActionPrompt(
         action="witch_action", options=options, deadline_ts=deadline_ts,
         hint="Reply via witch_save/witch_poison/witch_skip",
+        nickname_map=nickname_map,
     ))
     if resp.action == "witch_save" and state.witch.save_left:
         if state.tonight_killed_by_wolves and resp.target == state.tonight_killed_by_wolves:

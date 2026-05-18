@@ -20,9 +20,10 @@ async def _collect_votes(
     options: list[str],
     action_name: str,
     deadline_ts: float,
+    nickname_map: dict[str, str],
 ) -> dict[str, str | None]:
     prompts = [
-        ActionPrompt(action=action_name, options=options, deadline_ts=deadline_ts)
+        ActionPrompt(action=action_name, options=options, deadline_ts=deadline_ts, nickname_map=nickname_map)
         for _ in voters
     ]
     responses = await asyncio.gather(*(v.request(p) for v, p in zip(voters, prompts)))
@@ -47,8 +48,9 @@ async def run_day_vote(
     player_lookup = {p.id: p for p in players}
     alive_ids = [p.id for p in state.alive_players()]
     voters = [player_lookup[pid] for pid in alive_ids if pid in player_lookup]
+    nickname_map = {p.id: p.nickname for p in state.players}
 
-    votes = await _collect_votes(voters, alive_ids, "day_vote", deadline_ts)
+    votes = await _collect_votes(voters, alive_ids, "day_vote", deadline_ts, nickname_map)
     state.last_vote_tally = {k: v for k, v in votes.items() if v is not None}
     logger.info("第一轮投票 | votes=%s", votes)
     await broadcaster.broadcast(GameEvent(
@@ -68,7 +70,7 @@ async def run_day_vote(
         await broadcaster.broadcast(GameEvent(
             type="pk_round", payload={"candidates": candidates},
         ))
-        pk_votes = await _collect_votes(voters, candidates, "day_vote_pk", deadline_ts)
+        pk_votes = await _collect_votes(voters, candidates, "day_vote_pk", deadline_ts, nickname_map)
         logger.info("PK投票 | votes=%s", pk_votes)
         await broadcaster.broadcast(GameEvent(
             type="vote_tally", payload={"votes": pk_votes, "round": 2},
@@ -97,6 +99,7 @@ async def run_day_vote(
                 action="last_words",
                 deadline_ts=deadline_ts,
                 hint="Your final words (<=80 chars)",
+                nickname_map=nickname_map,
             ))
             text = (resp.text or "").strip()
             if text:

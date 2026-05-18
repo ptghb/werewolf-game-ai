@@ -34,10 +34,11 @@ async def run_wolf_kill(
     wolves = [p for p in players if p.id in alive_wolf_ids]
     alive_non_wolf = [p for p in state.alive_players() if p.role != Role.WEREWOLF]
     options = [p.id for p in alive_non_wolf]
+    nickname_map = {p.id: p.nickname for p in state.players}
     logger.info("狼人列表 | %s | 可选目标 | %s",
                 [w.id for w in wolves], options)
     prompts = [
-        ActionPrompt(action="wolf_vote", options=options, deadline_ts=deadline_ts)
+        ActionPrompt(action="wolf_vote", options=options, deadline_ts=deadline_ts, nickname_map=nickname_map)
         for _ in wolves
     ]
     responses = await asyncio.gather(

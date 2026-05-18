@@ -29,8 +29,12 @@ def _mk(name: str, description: str, schema: type[BaseModel]) -> StructuredTool:
     )
 
 
-def tools_for_action(action: str, options: list[str]) -> list[StructuredTool]:
-    opts_hint = f" Valid target_id: {options}." if options else ""
+def tools_for_action(action: str, options: list[str], nickname_map: dict[str, str] | None = None) -> list[StructuredTool]:
+    if nickname_map and options:
+        display = [f"{nickname_map.get(oid, oid)}({oid})" for oid in options]
+        opts_hint = f" Valid targets: {display}."
+    else:
+        opts_hint = f" Valid target_id: {options}." if options else ""
     if action == "wolf_vote":
         return [_mk("wolf_vote", "Cast your wolf-kill vote." + opts_hint, TargetInput)]
     if action == "seer_check":
@@ -46,7 +50,7 @@ def tools_for_action(action: str, options: list[str]) -> list[StructuredTool]:
         ]
     if action in ("speech", "speak", "last_words"):
         return [_mk("speak", "Speak aloud during your turn.", SpeakInput)]
-    if action == "day_vote":
+    if action in ("day_vote", "day_vote_pk"):
         return [
             _mk("day_vote", "Vote to eliminate a player." + opts_hint, TargetInput),
             _mk("day_abstain", "Abstain from voting.", NoInput),

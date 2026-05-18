@@ -48,15 +48,17 @@ class AIPlayer:
     async def _single_llm_call(self, prompt: ActionPrompt) -> ActionResponse | None:
         if self.llm is None:
             return None
-        tools = tools_for_action(prompt.action, prompt.options)
+        tools = tools_for_action(prompt.action, prompt.options, prompt.nickname_map)
         llm = self.llm.bind_tools(tools) if tools else self.llm
-        sys_prompt = build_system_prompt(self.role, self.persona, self.wolf_teammates)
+        sys_prompt = build_system_prompt(self.role, self.persona, self.wolf_teammates, prompt.nickname_map)
+        options_display = [f"{prompt.nickname_map.get(oid, oid)}({oid})" for oid in prompt.options]
         user_msg = (
             f"当前阶段：{prompt.action}\n"
-            f"可选目标 id：{prompt.options}\n"
+            f"可选目标：{options_display}\n"
             f"提示：{prompt.hint}\n\n"
             f"历史事件：\n{self._memory_text()}\n\n"
             f"请通过 function calling 作出决策。"
+            f"target_id 参数请填入玩家的 id（括号内的部分）。"
         )
         messages = [SystemMessage(content=sys_prompt), HumanMessage(content=user_msg)]
         try:

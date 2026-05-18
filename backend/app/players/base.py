@@ -13,6 +13,7 @@ class ActionPrompt:
     options: list[str] = field(default_factory=list)
     deadline_ts: float = 0.0
     hint: str = ""
+    nickname_map: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass

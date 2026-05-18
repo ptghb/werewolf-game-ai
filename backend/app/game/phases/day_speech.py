@@ -45,6 +45,8 @@ async def run_day_speech(
         payload={"phase": "day_speech", "order": order, "per_player_timeout": per_player_timeout},
     ))
 
+    nickname_map = {p.id: p.nickname for p in state.players}
+
     for pid in order:
         speaker = player_lookup.get(pid)
         if speaker is None:
@@ -54,6 +56,7 @@ async def run_day_speech(
             action="speech",
             deadline_ts=time.time() + per_player_timeout,
             hint="Your speech (<=80 chars)",
+            nickname_map=nickname_map,
         ))
         text = (resp.text or "").strip()
         if text:

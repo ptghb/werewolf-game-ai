@@ -36,8 +36,9 @@ async def run_seer_check(
         logger.info("预言家已死亡，跳过")
         return
     options = [p.id for p in state.alive_players() if p.id != seer.id]
+    nickname_map = {p.id: p.nickname for p in state.players}
     resp = await seer.request(ActionPrompt(
-        action="seer_check", options=options, deadline_ts=deadline_ts,
+        action="seer_check", options=options, deadline_ts=deadline_ts, nickname_map=nickname_map,
     ))
     if resp.target is None or resp.target not in options:
         logger.info("预言家跳过查验")
@@ -48,7 +49,7 @@ async def run_seer_check(
                 target.id, target.nickname, is_wolf)
     await seer.notify(GameEvent(
         type="seer_result",
-        payload={"target_id": target.id, "is_wolf": is_wolf},
+        payload={"target_id": target.id, "target_name": target.nickname, "is_wolf": is_wolf},
         audience=f"player:{seer.id}",
     ))
 

@@ -13,7 +13,7 @@ ROLE_DESCRIPTIONS: dict[Role, str] = {
 
 
 RULES_SUMMARY = """
-游戏规则：6 人局（3 狼人 + 1 女巫 + 1 预言家 + 1 平民）。
+游戏规则：6 人局（2 狼人 + 1 女巫 + 1 预言家 + 2 平民）。
 夜间：狼人共刀 → 预言家查验 → 女巫决定救/毒/跳。
 白天：公布死讯 → 轮流发言 → 全员投票（平票则 PK，再平无人出局）。
 胜负：所有狼人死 → 好人胜；好人（女巫+预言家+平民）全死 → 狼人胜。
@@ -24,10 +24,12 @@ def build_system_prompt(
     role: Role,
     persona: Persona,
     wolf_teammates: list[str],
+    nickname_map: dict[str, str] | None = None,
 ) -> str:
     teammate_line = ""
     if role == Role.WEREWOLF and wolf_teammates:
-        teammate_line = f"\n你的狼队友 id：{', '.join(wolf_teammates)}。"
+        names = [f"{nickname_map.get(tid, tid)}({tid})" if nickname_map else tid for tid in wolf_teammates]
+        teammate_line = f"\n你的狼队友：{', '.join(names)}。"
     return (
         f"{RULES_SUMMARY}\n\n"
         f"{ROLE_DESCRIPTIONS[role]}{teammate_line}\n\n"
