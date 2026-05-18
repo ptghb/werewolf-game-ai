@@ -17,7 +17,23 @@ def test_assign_deterministic_under_seed():
     assert r1 == r2
 
 
+def test_assign_roles_9_players():
+    roles = assign_roles(9)
+    assert len(roles) == 9
+    assert roles.count(Role.WEREWOLF) == 3
+    assert roles.count(Role.VILLAGER) == 3
+    assert roles.count(Role.SEER) == 1
+    assert roles.count(Role.WITCH) == 1
+    assert roles.count(Role.HUNTER) == 1
+
+
 def test_assign_rejects_non_six():
     import pytest
     with pytest.raises(ValueError):
         assign_roles(7)
+
+
+def test_assign_rejects_invalid():
+    import pytest
+    with pytest.raises(ValueError):
+        assign_roles(5)
