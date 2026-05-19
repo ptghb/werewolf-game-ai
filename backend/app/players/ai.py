@@ -108,6 +108,10 @@ class AIPlayer:
             if resp.action == "witch_poison":
                 return resp.target in prompt.options
             return False
+        if prompt.action == "hunter_shot":
+            if resp.action == "hunter_skip":
+                return True
+            return resp.target in prompt.options
         if prompt.options and resp.target not in prompt.options:
             return False
         return True
@@ -136,6 +140,10 @@ class AIPlayer:
             logger.info("白天投票 | %s | 弃权", player_info)
         elif action == "day_vote_pk":
             logger.info("PK投票 | %s | target=%s", player_info, resp.target or "弃票")
+        elif action == "hunter_shot":
+            logger.info("猎人开枪 | %s | target=%s", player_info, resp.target or "跳过")
+        elif action == "hunter_skip":
+            logger.info("猎人放弃开枪 | %s", player_info)
         else:
             logger.info("决策 | %s | action=%s | target=%s | text=\"%s\"",
                         player_info, action, resp.target or "", (resp.text or "")[:50])
@@ -170,6 +178,10 @@ class AIPlayer:
             return resp
         if prompt.action == "day_vote":
             resp = ActionResponse(action="day_abstain")
+            await self._log_decision(prompt, resp)
+            return resp
+        if prompt.action == "hunter_shot":
+            resp = ActionResponse(action="hunter_skip")
             await self._log_decision(prompt, resp)
             return resp
         resp = ActionResponse(action=prompt.action, target=self._default_target(prompt.options))
