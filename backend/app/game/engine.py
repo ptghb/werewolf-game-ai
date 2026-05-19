@@ -94,6 +94,8 @@ class GameEngine:
             broadcaster=self.broadcaster,
             deadline_ts=self._deadline("witch_action"),
         )
+        # Save tonight_killed_by_wolves before day_announce clears it
+        wolf_kill_target = self.state.tonight_killed_by_wolves
         await run_day_announce(
             self.state,
             self.players,
@@ -102,8 +104,8 @@ class GameEngine:
         )
 
         # Check if hunter was killed by wolves (not poisoned)
-        if self.state.tonight_killed_by_wolves:
-            killed_player = self.state.get_player(self.state.tonight_killed_by_wolves)
+        if wolf_kill_target:
+            killed_player = self.state.get_player(wolf_kill_target)
             if killed_player and killed_player.role == Role.HUNTER:
                 self.state.hunter_just_died = True
                 self.state.last_death_reason = "wolf"

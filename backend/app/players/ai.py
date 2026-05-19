@@ -102,11 +102,17 @@ class AIPlayer:
             return resp.text is not None
         if resp.action in ("seer_skip", "witch_skip", "day_abstain"):
             return True
-        if prompt.action == "witch_action":
+        if prompt.action == "witch_save":
             if resp.action == "witch_save":
-                return resp.target is not None
+                return resp.target in prompt.options
+            if resp.action == "witch_skip":
+                return True
+            return False
+        if prompt.action == "witch_poison":
             if resp.action == "witch_poison":
                 return resp.target in prompt.options
+            if resp.action == "witch_skip":
+                return True
             return False
         if prompt.action == "hunter_shot":
             if resp.action == "hunter_skip":
@@ -172,7 +178,7 @@ class AIPlayer:
             resp = ActionResponse(action="seer_skip")
             await self._log_decision(prompt, resp)
             return resp
-        if prompt.action == "witch_action":
+        if prompt.action in ("witch_save", "witch_poison"):
             resp = ActionResponse(action="witch_skip")
             await self._log_decision(prompt, resp)
             return resp

@@ -6,7 +6,7 @@ export default function Lobby() {
   const [nickname, setNickname] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [mode, setMode] = useState("create");
-  const [humanSlots, setHumanSlots] = useState(1);
+  const [gameMode, setGameMode] = useState("6");
   const setConnection = useGameStore((s) => s.setConnection);
   const handleEvent = useGameStore((s) => s.handleEvent);
 
@@ -22,7 +22,7 @@ export default function Lobby() {
   const onCreate = async () => {
     const r = await fetch("/api/rooms", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ nickname, human_slots: Number(humanSlots), ai_slots: 6 - Number(humanSlots) }),
+      body: JSON.stringify({ nickname, mode: gameMode }),
     });
     const body = await r.json();
     attach(body.room_code, body.host_id, true);
@@ -160,23 +160,36 @@ export default function Lobby() {
         {mode === "create" && (
           <div style={{ animation: "fade-in 200ms ease-out" }}>
             <div style={inputGroupStyle}>
-              <label style={labelStyle}>真人玩家数量</label>
-              <div style={{ display: "flex", gap: 6 }}>
-                {[1, 2, 3, 4, 5, 6].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setHumanSlots(n)}
-                    className={humanSlots === n ? "btn-primary" : "btn-secondary"}
-                    style={{
-                      flex: 1, padding: "8px 0", fontSize: 12,
-                      boxShadow: humanSlots === n ? "0 0 12px var(--accent-glow)" : "none",
-                    }}
-                  >{n}
-                    <span style={{ display: "block", fontSize: 10, opacity: 0.6, marginTop: 1 }}>
-                      {6 - n}AI
-                    </span>
-                  </button>
-                ))}
+              <label style={labelStyle}>选择模式</label>
+              <div style={{ display: "flex", gap: 10 }}>
+                <div
+                  onClick={() => setGameMode("6")}
+                  className="card"
+                  style={{
+                    flex: 1, padding: "16px", cursor: "pointer", textAlign: "center",
+                    border: gameMode === "6" ? "1px solid var(--accent)" : undefined,
+                    background: gameMode === "6" ? "rgba(124,92,252,0.08)" : undefined,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <div style={{ fontSize: 28, fontWeight: 800, color: "var(--fg-primary)" }}>6</div>
+                  <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 4 }}>6人场</div>
+                  <div style={{ fontSize: 11, color: "var(--fg-muted)" }}>5 AI</div>
+                </div>
+                <div
+                  onClick={() => setGameMode("9")}
+                  className="card"
+                  style={{
+                    flex: 1, padding: "16px", cursor: "pointer", textAlign: "center",
+                    border: gameMode === "9" ? "1px solid var(--accent)" : undefined,
+                    background: gameMode === "9" ? "rgba(124,92,252,0.08)" : undefined,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <div style={{ fontSize: 28, fontWeight: 800, color: "var(--fg-primary)" }}>9</div>
+                  <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 4 }}>9人场</div>
+                  <div style={{ fontSize: 11, color: "var(--fg-muted)" }}>8 AI</div>
+                </div>
               </div>
             </div>
             <button

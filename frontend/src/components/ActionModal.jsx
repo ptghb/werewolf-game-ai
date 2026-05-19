@@ -4,7 +4,8 @@ import useGameStore from "../store/gameStore.js";
 const ACTION_LABELS = {
   wolf_vote: "选择击杀目标",
   seer_check: "选择查验对象",
-  witch_action: "女巫行动",
+  witch_save: "女巫救药",
+  witch_poison: "女巫毒药",
   day_vote: "投出警徽",
   day_vote_pk: "PK 投票",
   speech: "你的发言",
@@ -14,7 +15,8 @@ const ACTION_LABELS = {
 const ACTION_ICONS = {
   wolf_vote: "🐺",
   seer_check: "🔮",
-  witch_action: "🧪",
+  witch_save: "🧪",
+  witch_poison: "🧪",
   day_vote: "🗳️",
   day_vote_pk: "🗳️",
   speech: "💬",
@@ -47,7 +49,8 @@ export default function ActionModal() {
   if (!prompt) return null;
 
   const isSpeech = ["speech", "last_words"].includes(prompt.action);
-  const isWitch = prompt.action === "witch_action";
+  const isWitchSave = prompt.action === "witch_save";
+  const isWitchPoison = prompt.action === "witch_poison";
 
   const submit = (action, extra = {}) => {
     sendAction({ action, target: extra.target ?? null, text: extra.text ?? null });
@@ -126,10 +129,32 @@ export default function ActionModal() {
               </button>
             </div>
           </div>
-        ) : isWitch ? (
+        ) : isWitchSave ? (
           <div>
             <p style={{ fontSize: 13, color: "var(--fg-secondary)", marginBottom: 12 }}>
-              选择目标：
+              今晚被狼人杀死的是 <strong style={{ color: "var(--fg-primary)" }}>{optionLabel(prompt.options[0], players)}</strong>
+            </p>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button
+                className="btn-primary"
+                onClick={() => submit("witch_save", { target: prompt.options[0] })}
+                style={{ flex: 1, fontSize: 12 }}
+              >
+                🩹 救
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => submit("witch_skip")}
+                style={{ flex: 1, fontSize: 12 }}
+              >
+                不救
+              </button>
+            </div>
+          </div>
+        ) : isWitchPoison ? (
+          <div>
+            <p style={{ fontSize: 13, color: "var(--fg-secondary)", marginBottom: 12 }}>
+              选择毒杀目标：
             </p>
             <select
               value={target}
@@ -143,27 +168,19 @@ export default function ActionModal() {
             </select>
             <div style={{ display: "flex", gap: 6 }}>
               <button
-                className="btn-primary"
-                disabled={!target}
-                onClick={() => submit("witch_save", { target })}
-                style={{ flex: 1, fontSize: 12 }}
-              >
-                🩹 救
-              </button>
-              <button
                 className="btn-danger"
                 disabled={!target}
                 onClick={() => submit("witch_poison", { target })}
                 style={{ flex: 1, fontSize: 12 }}
               >
-                ☠️ 毒
+                ☠️ 毒杀
               </button>
               <button
                 className="btn-secondary"
                 onClick={() => submit("witch_skip")}
                 style={{ flex: 1, fontSize: 12 }}
               >
-                跳过
+                不用毒药
               </button>
             </div>
           </div>

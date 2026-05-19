@@ -34,39 +34,53 @@ async def run_witch_action(
     logger.info("女巫信息 | save_left=%s | poison_left=%s | tonight_killed=%s",
                 state.witch.save_left, state.witch.poison_left, state.tonight_killed_by_wolves)
 
+    killed_id = state.tonight_killed_by_wolves
+    killed_name = state.get_player(killed_id).nickname if killed_id else None
     await witch.notify(GameEvent(
         type="witch_info",
         payload={
-            "tonight_killed": state.tonight_killed_by_wolves,
-            "tonight_killed_name": (state.get_player(state.tonight_killed_by_wolves).nickname
-                                     if state.tonight_killed_by_wolves else None),
+            "tonight_killed": killed_id,
+            "tonight_killed_name": killed_name,
             "save_left": state.witch.save_left,
             "poison_left": state.witch.poison_left,
         },
         audience=f"player:{witch.id}",
     ))
-    options = [p.id for p in state.alive_players()]
-    nickname_map = {p.id: p.nickname for p in state.players}
-    resp = await witch.request(ActionPrompt(
-        action="witch_action", options=options, deadline_ts=deadline_ts,
-        hint="Reply via witch_save/witch_poison/witch_skip",
-        nickname_map=nickname_map,
-    ))
-    if resp.action == "witch_save" and state.witch.save_left:
-        if state.tonight_killed_by_wolves and resp.target == state.tonight_killed_by_wolves:
+
+    # Stage 1: Save — only if save is available and someone was killed
+    if state.witch.save_left and killed_id and not state.tonight_saved_by_witch:
+        nickname_map = {p.id: p.nickname for p in state.players}
+        resp = await witch.request(ActionPrompt(
+            action="witch_save",
+            options=[killed_id],
+            deadline_ts=deadline_ts,
+            hint=f"今晚被狼人杀死的是 {killed_name}。是否使用救药？",
+            nickname_map=nickname_map,
+        ))
+        if resp.action != "witch_skip" and resp.target == killed_id:
             state.tonight_saved_by_witch = True
             state.witch.save_left = False
-            logger.info("女巫使用救药 | target=%s", resp.target)
-            return
+            logger.info("女巫使用救药 | target=%s", killed_id)
         else:
-            logger.warning("女巫救药目标无效 | target=%s | killed=%s",
-                           resp.target, state.tonight_killed_by_wolves)
-    if resp.action == "witch_poison" and state.witch.poison_left:
-        if resp.target in options:
+            logger.info("女巫不使用救药")
+
+    # Stage 2: Poison — if poison still available
+    if state.witch.poison_left:
+        options = [p.id for p in state.alive_players() if p.id != witch.id]
+        nickname_map = {p.id: p.nickname for p in state.players}
+        resp = await witch.request(ActionPrompt(
+            action="witch_poison",
+            options=options,
+            deadline_ts=deadline_ts,
+            hint="是否使用毒药毒杀一名玩家？",
+            nickname_map=nickname_map,
+        ))
+        if resp.action != "witch_skip" and resp.target and resp.target in options:
             state.tonight_poisoned_by_witch = resp.target
             state.witch.poison_left = False
             logger.info("女巫使用毒药 | target=%s", resp.target)
-            return
+        else:
+            logger.info("女巫不使用毒药")
 
 
 __all__ = ["run_witch_action"]

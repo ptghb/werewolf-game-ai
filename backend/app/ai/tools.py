@@ -42,11 +42,15 @@ def tools_for_action(action: str, options: list[str], nickname_map: dict[str, st
             _mk("seer_check", "Check a player's identity tonight." + opts_hint, TargetInput),
             _mk("seer_skip", "Skip tonight's check.", NoInput),
         ]
-    if action == "witch_action":
+    if action == "witch_save":
         return [
-            _mk("witch_save", "Use save potion on a player." + opts_hint, TargetInput),
+            _mk("witch_save", "Use save potion to save the killed player." + opts_hint, TargetInput),
+            _mk("witch_skip", "Don't use save potion.", NoInput),
+        ]
+    if action == "witch_poison":
+        return [
             _mk("witch_poison", "Use poison potion on a player." + opts_hint, TargetInput),
-            _mk("witch_skip", "Use neither potion tonight.", NoInput),
+            _mk("witch_skip", "Don't use poison potion.", NoInput),
         ]
     if action in ("speech", "speak", "last_words"):
         return [_mk("speak", "Speak aloud during your turn.", SpeakInput)]
