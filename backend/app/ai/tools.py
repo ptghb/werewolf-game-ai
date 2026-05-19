@@ -55,6 +55,11 @@ def tools_for_action(action: str, options: list[str], nickname_map: dict[str, st
             _mk("day_vote", "Vote to eliminate a player." + opts_hint, TargetInput),
             _mk("day_abstain", "Abstain from voting.", NoInput),
         ]
+    if action == "hunter_shot":
+        return [
+            _mk("hunter_shot", "Shoot a player and take them down with you." + opts_hint, TargetInput),
+            _mk("hunter_skip", "Choose not to shoot.", NoInput),
+        ]
     return []
 
 
