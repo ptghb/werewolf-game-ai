@@ -100,6 +100,7 @@ async def run_hunter_shot(
 
     state.hunter_can_shoot = False
 
+    dead_list = [hunter_player_state.id, target]
     logger.info("猎人开枪 | shooter=%s | target=%s(%s)",
                 hunter_player_state.id, target, victim.nickname if victim else "?")
     await broadcaster.broadcast(GameEvent(
@@ -111,7 +112,7 @@ async def run_hunter_shot(
     ))
     await broadcaster.broadcast(GameEvent(
         type="death_announce",
-        payload={"dead": [target], "reason": "hunter_shot"},
+        payload={"dead": dead_list, "reason": "hunter_shot"},
     ))
 
     # Give last words to the shot player

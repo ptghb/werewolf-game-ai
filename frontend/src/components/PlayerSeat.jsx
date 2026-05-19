@@ -1,6 +1,6 @@
 import React from "react";
 
-const ROLE_ICONS = { werewolf: "🐺", witch: "🧪", seer: "🔮", villager: "👤" };
+const ROLE_ICONS = { werewolf: "🐺", witch: "🧪", seer: "🔮", villager: "👤", hunter: "🏹" };
 
 export default function PlayerSeat({ player, isMe }) {
   const alive = player.alive !== false;
