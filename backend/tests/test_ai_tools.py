@@ -16,10 +16,18 @@ def test_seer_check_has_skip_option():
     assert "seer_skip" in names
 
 
-def test_witch_action_exposes_three_tools():
-    tools = tools_for_action("witch_action", options=["p0", "p1"])
+def test_witch_save_has_save_and_skip():
+    tools = tools_for_action("witch_save", options=["p0"])
     names = {t.name for t in tools}
-    assert names >= {"witch_save", "witch_poison", "witch_skip"}
+    assert "witch_save" in names
+    assert "witch_skip" in names
+
+
+def test_witch_poison_has_poison_and_skip():
+    tools = tools_for_action("witch_poison", options=["p0", "p1"])
+    names = {t.name for t in tools}
+    assert "witch_poison" in names
+    assert "witch_skip" in names
 
 
 def test_speech_tool_text_only():

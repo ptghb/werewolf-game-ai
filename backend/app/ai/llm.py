@@ -13,7 +13,7 @@ def build_llm(model: str | None = None, temperature: float = 0.8) -> ChatOpenAI:
         api_key=settings.api_key or "dummy",
         base_url=settings.base_url,
         timeout=LLM_CALL_TIMEOUT,
-        max_retries=0,
+        max_retries=2,
     )
 
 

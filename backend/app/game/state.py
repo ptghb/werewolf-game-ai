@@ -35,6 +35,9 @@ class GameState:
     tonight_saved_by_witch: bool = False
     witch: WitchPotions = field(default_factory=WitchPotions)
     last_vote_tally: dict[str, str] = field(default_factory=dict)
+    hunter_can_shoot: bool = True
+    hunter_just_died: bool = False
+    last_death_reason: str | None = None
 
     def get_player(self, pid: str) -> PlayerState | None:
         for p in self.players:

@@ -91,6 +91,11 @@ class AIPlayer:
         if name == "speak":
             return ActionResponse(action=prompt.action, text=(args.get("text") or "").strip())
         target = args.get("target_id")
+        # LLM may include nickname in target_id like "昵称(id)" — extract pure id
+        if target and isinstance(target, str) and "(" in target and target.endswith(")"):
+            extracted = target.split("(")[-1].rstrip(")")
+            if extracted in (prompt.options or []):
+                target = extracted
         if name in ("witch_save", "witch_poison"):
             return ActionResponse(action=name, target=target)
         return ActionResponse(action=name or prompt.action, target=target)
@@ -162,7 +167,7 @@ class AIPlayer:
         for attempt in range(MAX_LLM_RETRIES + 1):
             resp = await self._single_llm_call(prompt)
             valid = self._is_valid(prompt, resp)
-            logger.debug("LLM调用 | %s | attempt=%d | valid=%s | resp=%s",
+            logger.info("LLM调用 | %s | attempt=%d | valid=%s | resp=%s",
                          player_info, attempt + 1, valid, resp)
             if valid:
                 await self._log_decision(prompt, resp)
