@@ -41,3 +41,12 @@ def test_mixed_still_alive_no_winner():
 def test_wolves_plus_one_good_still_no_winner():
     s = _make_state([Role.WEREWOLF, Role.VILLAGER])
     assert check_winner(s) is None
+
+
+def test_alive_idiot_counts_as_good():
+    players = [
+        PlayerState(id="wolf", nickname="wolf", role=Role.WEREWOLF, is_ai=False, seat=0),
+        PlayerState(id="idiot", nickname="idiot", role=Role.IDIOT, is_ai=False, seat=1, idiot_revealed=True),
+    ]
+    state = GameState(room_code="R", players=players, phase=Phase.CHECK_WIN)
+    assert check_winner(state) is None

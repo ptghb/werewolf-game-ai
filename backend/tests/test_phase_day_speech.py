@@ -72,6 +72,28 @@ async def test_empty_speech_skipped_in_broadcast():
 
 
 @pytest.mark.asyncio
+async def test_revealed_idiot_still_speaks():
+    speeches = {f"p{i}": f"speech-p{i}" for i in range(6)}
+    state, fakes = _setup(speeches)
+    player = state.get_player("p5")
+    player.role = Role.IDIOT
+    player.idiot_revealed = True
+    b = Broadcaster(state, fakes)
+
+    order = await run_day_speech(state, fakes, broadcaster=b,
+                                 start_player_id="p4", per_player_timeout=5)
+
+    assert "p5" in order
+    p0_fake = next(f for f in fakes if f.id == "p0")
+    assert any(
+        e.type == "chat_message"
+        and e.payload.get("from") == "p5"
+        and e.payload.get("text") == "speech-p5"
+        for e in p0_fake.received
+    )
+
+
+@pytest.mark.asyncio
 async def test_day_speech_includes_sender_nickname():
     state, fakes = _setup({"p0": "hello"})
     for p in state.players:

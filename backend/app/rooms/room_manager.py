@@ -25,11 +25,11 @@ class RoomManager:
 
     async def create_room(self, *, host_nickname: str, mode: str = "6") -> Room:
         if mode == "6":
-            total = 6
             ai_slots = 5
         elif mode == "9":
-            total = 9
             ai_slots = 8
+        elif mode == "12":
+            ai_slots = 11
         else:
             raise ValueError(f"Invalid mode: {mode}")
         async with self._lock:

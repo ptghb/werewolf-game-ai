@@ -5,14 +5,26 @@ import logging
 from typing import Iterable
 
 from app.game.broadcaster import Broadcaster
-from app.game.constants import Phase
+from app.game.constants import Phase, Role
 from app.game.events import GameEvent
-from app.game.state import GameState
+from app.game.state import GameState, PlayerState
 from app.game.vote import tally_votes
 from app.players.base import ActionPrompt, Player
 
 
 logger = logging.getLogger("werewolf.game.phase")
+
+
+def _is_revealed_idiot(player: PlayerState) -> bool:
+    return player.role == Role.IDIOT and player.idiot_revealed
+
+
+def _can_vote(player: PlayerState) -> bool:
+    return player.alive and not _is_revealed_idiot(player)
+
+
+def _can_be_voted(player: PlayerState) -> bool:
+    return player.alive and not _is_revealed_idiot(player)
 
 
 async def _collect_votes(
@@ -46,11 +58,12 @@ async def run_day_vote(
         type="phase_change", payload={"phase": "day_vote", "deadline_ts": deadline_ts},
     ))
     player_lookup = {p.id: p for p in players}
-    alive_ids = [p.id for p in state.alive_players()]
-    voters = [player_lookup[pid] for pid in alive_ids if pid in player_lookup]
+    vote_options = [p.id for p in state.players if _can_be_voted(p)]
+    voter_ids = [p.id for p in state.players if _can_vote(p)]
+    voters = [player_lookup[pid] for pid in voter_ids if pid in player_lookup]
     nickname_map = {p.id: p.nickname for p in state.players}
 
-    votes = await _collect_votes(voters, alive_ids, "day_vote", deadline_ts, nickname_map)
+    votes = await _collect_votes(voters, vote_options, "day_vote", deadline_ts, nickname_map)
     state.last_vote_tally = {k: v for k, v in votes.items() if v is not None}
     logger.info("第一轮投票 | votes=%s", votes)
     await broadcaster.broadcast(GameEvent(
@@ -64,8 +77,8 @@ async def run_day_vote(
         eliminated = vote_result.winner
         logger.info("投票结果 | 出局=%s | 得票=%d", eliminated, vote_result.counts.get(eliminated, 0))
     elif vote_result.kind == "tie":
-        pk_used = True
-        candidates = vote_result.tied_candidates
+        candidates = [candidate for candidate in vote_result.tied_candidates if candidate in vote_options]
+        pk_used = bool(candidates)
         logger.info("投票平局 | candidates=%s | 进入PK轮", candidates)
         await broadcaster.broadcast(GameEvent(
             type="pk_round", payload={"candidates": candidates},
@@ -84,32 +97,42 @@ async def run_day_vote(
     else:
         logger.info("无人投票")
 
+    idiot_revealed: str | None = None
     if eliminated:
         victim = state.get_player(eliminated)
-        if victim:
-            victim.alive = False
-        logger.info("放逐 | player=%s(%s) | is_ai=%s",
-                    eliminated, victim.nickname if victim else "?", victim.is_ai if victim else "?")
-        await broadcaster.broadcast(GameEvent(
-            type="death_announce", payload={"dead": [eliminated], "reason": "vote"},
-        ))
-        speaker = player_lookup.get(eliminated)
-        if speaker is not None:
-            resp = await speaker.request(ActionPrompt(
-                action="last_words",
-                deadline_ts=deadline_ts,
-                hint="Your final words (<=80 chars)",
-                nickname_map=nickname_map,
+        if victim and victim.role == Role.IDIOT and not victim.idiot_revealed:
+            victim.idiot_revealed = True
+            idiot_revealed = eliminated
+            eliminated = None
+            logger.info("白痴翻牌免死 | player=%s(%s)", victim.id, victim.nickname)
+            await broadcaster.broadcast(GameEvent(
+                type="idiot_reveal", payload={"player_id": victim.id},
             ))
-            text = (resp.text or "").strip()
-            if text:
-                await broadcaster.broadcast(GameEvent(
-                    type="chat_message",
-                    payload={"from": eliminated, "from_name": speaker.nickname, "text": text, "channel": "day", "last_words": True},
-                ))
+        else:
             if victim:
-                victim.used_last_words = True
-    return {"eliminated": eliminated, "pk_used": pk_used, "votes": votes}
+                victim.alive = False
+            logger.info("放逐 | player=%s(%s) | is_ai=%s",
+                        eliminated, victim.nickname if victim else "?", victim.is_ai if victim else "?")
+            await broadcaster.broadcast(GameEvent(
+                type="death_announce", payload={"dead": [eliminated], "reason": "vote"},
+            ))
+            speaker = player_lookup.get(eliminated)
+            if speaker is not None:
+                resp = await speaker.request(ActionPrompt(
+                    action="last_words",
+                    deadline_ts=deadline_ts,
+                    hint="Your final words (<=80 chars)",
+                    nickname_map=nickname_map,
+                ))
+                text = (resp.text or "").strip()
+                if text:
+                    await broadcaster.broadcast(GameEvent(
+                        type="chat_message",
+                        payload={"from": eliminated, "from_name": speaker.nickname, "text": text, "channel": "day", "last_words": True},
+                    ))
+                if victim:
+                    victim.used_last_words = True
+    return {"eliminated": eliminated, "idiot_revealed": idiot_revealed, "pk_used": pk_used, "votes": votes}
 
 
 __all__ = ["run_day_vote"]

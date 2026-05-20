@@ -59,6 +59,26 @@ async def test_peaceful_night():
 
 
 @pytest.mark.asyncio
+async def test_revealed_idiot_can_die_at_night():
+    s, fakes = _state("p5", None, False)
+    player = s.get_player("p5")
+    player.role = Role.IDIOT
+    player.idiot_revealed = True
+    b = Broadcaster(s, fakes)
+
+    dead = await run_day_announce(s, fakes, broadcaster=b, deadline_ts=9999999999)
+
+    assert dead == ["p5"]
+    assert s.get_player("p5").alive is False
+    p0_fake = next(f for f in fakes if f.id == "p0")
+    assert any(
+        e.type == "death_announce"
+        and e.payload == {"dead": ["p5"], "reason": "night"}
+        for e in p0_fake.received
+    )
+
+
+@pytest.mark.asyncio
 async def test_night_death_last_words_include_sender_nickname():
     s, fakes = _state("p5", None, False)
     p5_fake = next(f for f in fakes if f.id == "p5")

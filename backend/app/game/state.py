@@ -21,6 +21,7 @@ class PlayerState:
     alive: bool = True
     used_last_words: bool = False
     connected: bool = True
+    idiot_revealed: bool = False
 
 
 @dataclass

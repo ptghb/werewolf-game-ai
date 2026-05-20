@@ -148,7 +148,7 @@ class ServerMessage(BaseModel):
     type: Literal[
         "room_state", "role_assigned", "phase_change", "prompt_action",
         "chat_message", "system_announce", "death_announce", "vote_tally",
-        "seer_result", "witch_info", "game_over", "error",
+        "seer_result", "witch_info", "game_over", "error", "idiot_reveal",
     ]
     payload: Any
     room: Optional[str] = None

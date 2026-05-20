@@ -7,6 +7,7 @@ class Role(str, Enum):
     SEER = "seer"
     VILLAGER = "villager"
     HUNTER = "hunter"
+    IDIOT = "idiot"
 
 
 class Phase(str, Enum):
@@ -40,6 +41,12 @@ NINE_PLAYER_ROLES: list[Role] = [
     Role.WEREWOLF, Role.WEREWOLF, Role.WEREWOLF,
     Role.VILLAGER, Role.VILLAGER, Role.VILLAGER,
     Role.SEER, Role.WITCH, Role.HUNTER,
+]
+
+TWELVE_PLAYER_ROLES: list[Role] = [
+    Role.WEREWOLF, Role.WEREWOLF, Role.WEREWOLF, Role.WEREWOLF,
+    Role.SEER, Role.WITCH, Role.HUNTER, Role.IDIOT,
+    Role.VILLAGER, Role.VILLAGER, Role.VILLAGER, Role.VILLAGER,
 ]
 
 WOLF_KILL_TIMEOUT = 45
