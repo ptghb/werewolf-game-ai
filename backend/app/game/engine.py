@@ -24,14 +24,14 @@ logger = logging.getLogger("werewolf.game")
 
 
 DEFAULT_TIMEOUTS = {
-    "wolf_kill": 45,
-    "seer_check": 20,
-    "witch_action": 25,
-    "day_announce": 5,
-    "day_speech": 60,
-    "day_vote": 30,
-    "hunter_shot": 30,
-    "last_words": 30,
+    "wolf_kill": 90,
+    "seer_check": 60,
+    "witch_action": 60,
+    "day_announce": 45,
+    "day_speech": 90,
+    "day_vote": 60,
+    "hunter_shot": 60,
+    "last_words": 60,
 }
 
 

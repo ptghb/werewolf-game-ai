@@ -18,7 +18,7 @@ class _SocketLike(Protocol):
     async def send_json(self, data: dict) -> None: ...
 
 
-DEFAULT_REQUEST_TIMEOUT = 60
+DEFAULT_REQUEST_TIMEOUT = 120
 
 
 @dataclass
