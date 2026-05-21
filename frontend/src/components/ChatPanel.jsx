@@ -4,8 +4,9 @@ import useGameStore from "../store/gameStore.js";
 const SPEECH_PHASES = new Set(["speech", "last_words"]);
 
 export default function ChatPanel() {
-  const { messageLog, sendChat, promptAction } = useGameStore();
-  const speaking = promptAction && SPEECH_PHASES.has(promptAction.action);
+  const { messageLog, promptAction, sendAction } = useGameStore();
+  const speechPrompt = promptAction && SPEECH_PHASES.has(promptAction.action) ? promptAction : null;
+  const muted = !speechPrompt;
   const [text, setText] = useState("");
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
@@ -14,12 +15,18 @@ export default function ChatPanel() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messageLog.length]);
 
-  const handleSend = () => {
-    if (text.trim()) {
-      sendChat("day", text.trim());
+  useEffect(() => {
+    if (speechPrompt) {
       setText("");
-      inputRef.current?.focus();
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
+  }, [speechPrompt]);
+
+  const handleSend = () => {
+    const trimmed = text.trim();
+    if (!trimmed || !speechPrompt) return;
+    sendAction({ action: speechPrompt.action, target: null, text: trimmed });
+    setText("");
   };
 
   return (
@@ -97,22 +104,22 @@ export default function ChatPanel() {
           ref={inputRef}
           style={{
             flex: 1, padding: "8px 10px", fontSize: 12,
-            opacity: speaking ? 0.4 : 1,
+            opacity: muted ? 0.4 : 1,
           }}
-          placeholder={speaking ? "请在上方弹窗中发言..." : "输入消息..."}
+          placeholder={speechPrompt ? (speechPrompt.action === "last_words" ? "留下你的遗言..." : "输入你的发言...") : "等待你的发言回合..."}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
           maxLength={80}
-          disabled={speaking}
+          disabled={muted}
         />
         <button
           className="btn-primary btn-sm"
           onClick={handleSend}
-          disabled={!text.trim() || speaking}
-          style={{ whiteSpace: "nowrap", opacity: speaking ? 0.4 : 1 }}
+          disabled={!text.trim() || muted}
+          style={{ whiteSpace: "nowrap", opacity: muted ? 0.4 : 1 }}
         >
-          发送
+          {speechPrompt?.action === "last_words" ? "遗言" : "发言"}
         </button>
       </div>
     </div>

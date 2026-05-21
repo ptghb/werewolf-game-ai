@@ -190,6 +190,20 @@ export default function Lobby() {
                   <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 4 }}>9人场</div>
                   <div style={{ fontSize: 11, color: "var(--fg-muted)" }}>8 AI</div>
                 </div>
+                <div
+                  onClick={() => setGameMode("12")}
+                  className="card"
+                  style={{
+                    flex: 1, padding: "16px", cursor: "pointer", textAlign: "center",
+                    border: gameMode === "12" ? "1px solid var(--accent)" : undefined,
+                    background: gameMode === "12" ? "rgba(124,92,252,0.08)" : undefined,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <div style={{ fontSize: 28, fontWeight: 800, color: "var(--fg-primary)" }}>12</div>
+                  <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 4 }}>12人场</div>
+                  <div style={{ fontSize: 11, color: "var(--fg-muted)" }}>11 AI</div>
+                </div>
               </div>
             </div>
             <button

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import useGameStore from "../store/gameStore.js";
 
 const ACTION_LABELS = {
@@ -33,22 +33,19 @@ export default function ActionModal() {
   const sendAction = useGameStore((s) => s.sendAction);
   const players = useGameStore((s) => s.players);
   const [target, setTarget] = useState("");
-  const [text, setText] = useState("");
-  const textareaRef = useRef(null);
 
   const visible = !!prompt;
 
   useEffect(() => {
     if (visible) {
       setTarget("");
-      setText("");
-      setTimeout(() => textareaRef.current?.focus(), 100);
     }
   }, [visible]);
 
   if (!prompt) return null;
 
   const isSpeech = ["speech", "last_words"].includes(prompt.action);
+  if (isSpeech) return null;
   const isWitchSave = prompt.action === "witch_save";
   const isWitchPoison = prompt.action === "witch_poison";
 
@@ -94,42 +91,7 @@ export default function ActionModal() {
           </div>
         </div>
 
-        {/* 发言模式 */}
-        {isSpeech ? (
-          <div>
-            <textarea
-              ref={textareaRef}
-              style={{
-                width: "100%", height: 100,
-                background: "var(--bg-elevated)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-md)",
-                padding: 12, fontSize: 14,
-                color: "var(--fg-primary)",
-                resize: "none",
-              }}
-              placeholder={prompt.action === "last_words" ? "留下你的遗言..." : "输入你的发言..."}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              maxLength={80}
-            />
-            <div style={{
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-              marginTop: 8,
-            }}>
-              <span style={{ fontSize: 11, color: "var(--fg-muted)" }}>
-                {text.length}/80
-              </span>
-              <button
-                className="btn-primary"
-                onClick={() => submit(prompt.action, { text })}
-                disabled={!text.trim()}
-              >
-                {prompt.action === "last_words" ? "留下遗言" : "发言"}
-              </button>
-            </div>
-          </div>
-        ) : isWitchSave ? (
+        {isWitchSave ? (
           <div>
             <p style={{ fontSize: 13, color: "var(--fg-secondary)", marginBottom: 12 }}>
               今晚被狼人杀死的是 <strong style={{ color: "var(--fg-primary)" }}>{optionLabel(prompt.options[0], players)}</strong>
