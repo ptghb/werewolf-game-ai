@@ -68,8 +68,30 @@ cd backend && python -m scripts.init_db
 
 - `POST /api/auth/register` — 注册（body: `{nickname, phone, account, password}`）
 - `POST /api/auth/login` — 登录（body: `{account, password}`），account 支持账号或手机号
+- `GET /api/auth/rooms/history?user_id=X` — 已结束房间列表
+- `GET /api/auth/rooms/history/{room_id}` — 房间复盘详情（含聊天记录）
 
 两者均返回 `{user: {id, nickname, phone, account, level}, token}`。
+
+## 房间复盘
+
+游戏结束后自动记录房间数据和聊天记录。在大厅右侧"我的战绩"列表中可查看已结束的房间，点击"复盘"查看完整聊天记录和玩家角色信息。
+
+### 数据库表
+
+rooms 表记录游戏房间信息：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT PK AUTO_INCREMENT | ID |
+| room_code | VARCHAR(10) UNIQUE | 房间号 |
+| creator_id | INT | 创建人ID |
+| creator_nickname | VARCHAR(50) | 创建人昵称 |
+| status | VARCHAR(20) | waiting / playing / finished |
+| result | VARCHAR(20) | good / werewolf |
+| game_log | TEXT | 聊天记录（JSON） |
+| created_at | DATETIME | 创建时间 |
+| updated_at | DATETIME | 更新时间 |
 
 ## 测试
 
