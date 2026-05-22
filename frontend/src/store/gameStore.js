@@ -1,6 +1,25 @@
 import { create } from "zustand";
 
+const TOKEN_KEY = "werewolf_token";
+const USER_KEY = "werewolf_user";
+
 const useGameStore = create((set, get) => ({
+  // 用户认证
+  token: localStorage.getItem(TOKEN_KEY) || null,
+  user: JSON.parse(localStorage.getItem(USER_KEY) || "null"),
+
+  setAuth(user, token) {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    set({ user, token });
+  },
+
+  logout() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    set({ user: null, token: null });
+  },
+
   inGame: false,
   roomCode: "",
   playerId: "",

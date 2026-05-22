@@ -3,12 +3,13 @@ import useGameStore from "../store/gameStore.js";
 import { createWSClient } from "../ws/client.js";
 
 export default function Lobby() {
-  const [nickname, setNickname] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [mode, setMode] = useState("create");
   const [gameMode, setGameMode] = useState("6");
   const setConnection = useGameStore((s) => s.setConnection);
   const handleEvent = useGameStore((s) => s.handleEvent);
+  const user = useGameStore((s) => s.user);
+  const logout = useGameStore((s) => s.logout);
 
   const attach = (roomCode, playerId, isHost) => {
     const ws = createWSClient({
@@ -22,7 +23,7 @@ export default function Lobby() {
   const onCreate = async () => {
     const r = await fetch("/api/rooms", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ nickname, mode: gameMode }),
+      body: JSON.stringify({ nickname: user.nickname, mode: gameMode }),
     });
     const body = await r.json();
     attach(body.room_code, body.host_id, true);
@@ -31,7 +32,7 @@ export default function Lobby() {
   const onJoin = async () => {
     const r = await fetch(`/api/rooms/${joinCode}/join`, {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ nickname }),
+      body: JSON.stringify({ nickname: user.nickname }),
     });
     if (!r.ok) { alert("房间不存在或已满"); return; }
     const body = await r.json();
@@ -118,15 +119,21 @@ export default function Lobby() {
           </p>
         </div>
 
-        {/* 昵称输入 */}
-        <div style={inputGroupStyle}>
-          <label style={labelStyle}>你的昵称</label>
-          <input
-            placeholder="输入昵称..."
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            maxLength={8}
-          />
+        {/* 用户信息 */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "8px 12px", marginBottom: 20,
+          background: "var(--bg-elevated)",
+          borderRadius: "var(--radius-md)",
+          fontSize: 13,
+        }}>
+          <span style={{ color: "var(--fg-secondary)" }}>
+            {user.nickname}
+            <span style={{ marginLeft: 8, color: "var(--fg-muted)", fontSize: 12 }}>
+              Lv.{user.level}
+            </span>
+          </span>
+          <button className="btn-ghost btn-sm" onClick={logout}>退出</button>
         </div>
 
         {/* 模式切换 */}
@@ -209,7 +216,6 @@ export default function Lobby() {
             <button
               className="btn-primary"
               onClick={onCreate}
-              disabled={!nickname}
               style={{ width: "100%", padding: "12px", fontSize: 15, marginTop: 8 }}
             >创建房间</button>
           </div>
@@ -231,7 +237,7 @@ export default function Lobby() {
             <button
               className="btn-primary"
               onClick={onJoin}
-              disabled={!nickname || !joinCode}
+              disabled={!joinCode}
               style={{ width: "100%", padding: "12px", fontSize: 15, marginTop: 8 }}
             >加入房间</button>
           </div>

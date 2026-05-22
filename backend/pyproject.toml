@@ -2,7 +2,8 @@
 name = "werewolf-backend"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["sqlalchemy>=2.0", "aiomysql", "passlib[bcrypt]", "python-jose[cryptography]",
+dependencies = ["sqlalchemy>=2.0", "aiomysql", "bcrypt", "python-jose[cryptography]", "greenlet",
+	  "fastapi>=0.115",
   "fastapi>=0.115",
   "uvicorn[standard]>=0.32",
   "websockets>=13",
