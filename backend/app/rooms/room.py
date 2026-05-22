@@ -18,6 +18,7 @@ class Room:
     players: List[Any] = field(default_factory=list)  # HumanPlayer | AIPlayer
     queue: asyncio.Queue = field(default_factory=asyncio.Queue)
     created_at: float = 0.0
+    chat_log: list[dict] = field(default_factory=list)
 
     @property
     def full(self) -> bool:

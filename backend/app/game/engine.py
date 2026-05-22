@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import random
 import time
-from typing import Iterable
+from typing import Callable, Iterable, Optional
 
 from app.game.broadcaster import Broadcaster
 from app.game.constants import Phase, Role
@@ -44,6 +44,9 @@ class GameEngine:
         start_player_id: str | None = None,
         phase_timeouts: dict[str, int] | None = None,
         rng: random.Random | None = None,
+        on_chat: Optional[Callable[[str, str, str], None]] = None,
+        on_system: Optional[Callable[[str], None]] = None,
+        on_death: Optional[Callable[[list[str], str], None]] = None,
     ):
         self.players = list(players)
         self.rng = rng or random.Random()
@@ -59,7 +62,12 @@ class GameEngine:
             for idx, p in enumerate(self.players)
         ]
         self.state = GameState(room_code=room_code, players=player_states, phase=Phase.LOBBY)
-        self.broadcaster = Broadcaster(self.state, self.players)
+        self.broadcaster = Broadcaster(
+            self.state, self.players,
+            on_chat=on_chat,
+            on_system=on_system,
+            on_death=on_death,
+        )
         self.start_player_id = start_player_id or player_states[0].id
         self.winner: str | None = None
 

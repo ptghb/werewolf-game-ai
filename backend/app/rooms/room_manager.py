@@ -12,6 +12,8 @@ from app.game.constants import Role
 from app.players.ai import AIPlayer
 from app.players.human import HumanPlayer
 from app.rooms.room import Room
+from app.database.session import async_session_factory
+from app.database.models import Room as RoomModel
 
 
 def _new_code() -> str:
@@ -23,7 +25,7 @@ class RoomManager:
         self._rooms: Dict[str, Room] = {}
         self._lock = Lock()
 
-    async def create_room(self, *, host_nickname: str, mode: str = "6") -> Room:
+    async def create_room(self, *, creator_id: int, host_nickname: str, mode: str = "6") -> Room:
         if mode == "6":
             ai_slots = 5
         elif mode == "9":
@@ -56,7 +58,16 @@ class RoomManager:
                         human_slots=1, ai_slots=ai_slots,
                         players=[host, *ai_players], created_at=time.time())
             self._rooms[code] = room
-            return room
+
+        # 写入 rooms 表
+        async with async_session_factory() as session:
+            session.add(RoomModel(
+                room_code=code, creator_id=creator_id, creator_nickname=host_nickname,
+                status="waiting",
+            ))
+            await session.commit()
+
+        return room
 
     async def join_room(self, code: str, *, nickname: str) -> str:
         async with self._lock:

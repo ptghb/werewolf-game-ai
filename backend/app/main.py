@@ -6,6 +6,7 @@ import logging
 import random
 
 import os
+import json
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +20,9 @@ from app.players.ai import AIPlayer
 from app.ai.llm import build_llm
 from app.rooms.room_manager import RoomManager
 from app.auth_routes import router as auth_router
+from sqlalchemy import select
+from app.database.session import async_session_factory
+from app.database.models import Room as RoomModel
 
 
 logger = logging.getLogger("werewolf")
@@ -38,6 +42,7 @@ app.include_router(auth_router)
 
 
 class CreateRoomBody(BaseModel):
+    user_id: int
     nickname: str
     mode: str = "6"
 
@@ -55,7 +60,7 @@ async def healthz():
 async def create_room(body: CreateRoomBody):
     try:
         room = await manager.create_room(
-            host_nickname=body.nickname,
+            creator_id=body.user_id, host_nickname=body.nickname,
             mode=body.mode,
         )
     except ValueError as e:
@@ -125,7 +130,9 @@ async def ws_endpoint(ws: WebSocket):
             elif mtype == "action":
                 await player.deliver_action(payload)
             elif mtype == "chat":
-                await room.queue.put({"type": "chat", **payload, "from": player.id, "from_name": player.nickname})
+                entry = {"from": player.id, "from_name": player.nickname, **payload}
+                room.chat_log.append(entry)
+                await room.queue.put({"type": "chat", **entry})
             elif mtype == "start_game":
                 if player.id == room.host_id:
                     asyncio.create_task(_run_game(room))
@@ -177,9 +184,42 @@ async def _run_game(room) -> None:
                 payload={"phase": Phase.NIGHT_START.value, "deadline_ts": None, "day": 1},
             ))
 
-        engine = GameEngine(room_code=room.code, players=room.players, start_player_id=start_id)
+        # 更新游戏状态为 playing
+        async with async_session_factory() as session:
+            r = (await session.execute(select(RoomModel).where(RoomModel.room_code == room.code))).scalar_one_or_none()
+            if r:
+                r.status = "playing"
+                await session.commit()
+
+        _player_map = {p.id: p.nickname for p in room.players}
+        def _nickname(pid):
+            return _player_map.get(pid, pid)
+
+        def _chat_log(from_id, from_name, text):
+            room.chat_log.append({"from": from_id, "from_name": from_name, "text": text})
+
+        engine = GameEngine(room_code=room.code, players=room.players,
+                            start_player_id=start_id, on_chat=_chat_log,
+                            on_system=lambda text: room.chat_log.append({"type": "system", "text": text}),
+                            on_death=lambda dead, reason: room.chat_log.append(
+                                {"type": "system", "text": f"死亡：{','.join(_nickname(p) for p in dead)}"}))
         await engine.run_until_game_over()
         logger.info("游戏结束 | room=%s | winner=%s", room.code, engine.winner)
+
+        # 在日志开头插入玩家角色信息
+        room.chat_log.insert(0, {
+            "type": "system",
+            "text": f"玩家列表：{' | '.join(f'{_nickname(p.id)}={p.role.value}' for p in room.players)}"
+        })
+
+        # 更新房间结果和聊天记录
+        async with async_session_factory() as session:
+            r = (await session.execute(select(RoomModel).where(RoomModel.room_code == room.code))).scalar_one_or_none()
+            if r:
+                r.status = "finished"
+                r.result = engine.winner
+                r.game_log = json.dumps(room.chat_log, ensure_ascii=False)
+                await session.commit()
     except Exception as e:
         import traceback
         logger.error("游戏运行异常", exc_info=True)

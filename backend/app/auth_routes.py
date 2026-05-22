@@ -1,15 +1,46 @@
 from __future__ import annotations
+import json
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import or_, select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import or_, select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.auth import create_token, hash_password, verify_password
-from app.database.models import User
+from app.database.models import User, Room as RoomModel
 from app.database.schemas import AuthResponse, LoginRequest, RegisterRequest, UserResponse
 from app.database.session import get_session
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+
+@router.get("/rooms/history")
+async def room_history(user_id: int = Query(...), session: AsyncSession = Depends(get_session)):
+    result = await session.execute(
+        select(RoomModel)
+        .where(RoomModel.creator_id == user_id, RoomModel.status == "finished")
+        .order_by(desc(RoomModel.created_at))
+        .limit(20)
+    )
+    rooms = result.scalars().all()
+    return [
+        {"id": r.id, "room_code": r.room_code, "status": r.status, "result": r.result,
+         "created_at": r.created_at.isoformat() if r.created_at else None}
+        for r in rooms
+    ]
+
+
+@router.get("/rooms/history/{room_id}")
+async def room_history_detail(room_id: int, session: AsyncSession = Depends(get_session)):
+    r = await session.get(RoomModel, room_id)
+    if r is None:
+        raise HTTPException(status_code=404, detail="Room not found")
+    game_log = json.loads(r.game_log) if r.game_log else []
+    return {
+        "id": r.id, "room_code": r.room_code, "creator_nickname": r.creator_nickname,
+        "status": r.status, "result": r.result,
+        "created_at": r.created_at.isoformat() if r.created_at else None,
+        "game_log": game_log,
+    }
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)

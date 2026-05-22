@@ -4,7 +4,7 @@ const PHASE_LABELS = {
   lobby: "等待中", role_assign: "发牌中", night_start: "🌙 天黑请闭眼",
   wolf_kill: "🐺 狼人行动", seer_check: "🔮 预言家行动", witch_action: "🧪 女巫行动",
   day_announce: "☀️ 天亮公告", day_speech: "💬 白天发言", day_vote: "🗳️ 投票出局",
-  check_win: "⚖️ 判定胜负", game_over: "🏁 游戏结束",
+  hunter_shot: "🏹 猎人开枪", check_win: "⚖️ 判定胜负", game_over: "🏁 游戏结束",
 };
 
 export default function PhaseBanner({ phase, day, deadlineTs }) {

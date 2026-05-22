@@ -38,7 +38,15 @@ const useGameStore = create((set, get) => ({
   witchInfo: null,
   gameOver: null,
   promptAction: null, // {action, options, deadline_ts, hint}
+  reviewRoom: null,
   ws: null,
+
+  setReview(room) {
+    set({ reviewRoom: room, inGame: false });
+  },
+  clearReview() {
+    set({ reviewRoom: null });
+  },
 
   setConnection({ ws, roomCode, playerId, isHost }) {
     set({ ws, roomCode, playerId, isHost, inGame: true });

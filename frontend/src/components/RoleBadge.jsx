@@ -1,7 +1,6 @@
 import React from "react";
 import useGameStore from "../store/gameStore.js";
-
-const ROLE_LABELS = { werewolf: "狼人", witch: "女巫", seer: "预言家", villager: "平民", hunter: "猎人", idiot: "白痴" };
+import { ROLE_LABEL } from "../constants.js";
 const ROLE_COLORS = {
   werewolf: "var(--wolf)",
   witch: "var(--accent)",
@@ -36,7 +35,7 @@ export default function RoleBadge() {
         {myRole === "werewolf" ? "狼" : myRole === "witch" ? "巫" : myRole === "seer" ? "眼" : myRole === "hunter" ? "猎" : myRole === "idiot" ? "白" : "民"}
       </div>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 600 }}>{ROLE_LABELS[myRole]}</div>
+        <div style={{ fontSize: 13, fontWeight: 600 }}>{ROLE_LABEL[myRole]}</div>
         {wolfTeammates?.length > 0 && (
           <div style={{ fontSize: 11, color: "var(--fg-muted)", marginTop: 2 }}>
             狼队友：{teammateNames.join(", ")}

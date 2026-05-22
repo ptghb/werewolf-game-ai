@@ -1,15 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import useGameStore from "../store/gameStore.js";
 import { createWSClient } from "../ws/client.js";
 
 export default function Lobby() {
-  const [joinCode, setJoinCode] = useState("");
-  const [mode, setMode] = useState("create");
-  const [gameMode, setGameMode] = useState("6");
+  const [gameMode, setGameMode] = React.useState("6");
+  const [history, setHistory] = React.useState([]);
   const setConnection = useGameStore((s) => s.setConnection);
   const handleEvent = useGameStore((s) => s.handleEvent);
   const user = useGameStore((s) => s.user);
   const logout = useGameStore((s) => s.logout);
+  const setReview = useGameStore((s) => s.setReview);
+
+  useEffect(() => {
+    fetch(`/api/auth/rooms/history?user_id=${user.id}`)
+      .then((r) => r.json())
+      .then(setHistory)
+      .catch(() => {});
+  }, [user.id]);
 
   const attach = (roomCode, playerId, isHost) => {
     const ws = createWSClient({
@@ -23,43 +30,35 @@ export default function Lobby() {
   const onCreate = async () => {
     const r = await fetch("/api/rooms", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ nickname: user.nickname, mode: gameMode }),
+      body: JSON.stringify({ user_id: user.id, nickname: user.nickname, mode: gameMode }),
     });
     const body = await r.json();
     attach(body.room_code, body.host_id, true);
   };
 
-  const onJoin = async () => {
-    const r = await fetch(`/api/rooms/${joinCode}/join`, {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ nickname: user.nickname }),
-    });
-    if (!r.ok) { alert("房间不存在或已满"); return; }
-    const body = await r.json();
-    attach(body.room_code, body.player_id, false);
+  const onReview = (roomId) => {
+    fetch(`/api/auth/rooms/history/${roomId}`)
+      .then((r) => r.json())
+      .then((data) => setReview(data))
+      .catch(() => alert("获取复盘数据失败"));
   };
 
   const pageStyle = {
     minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
     background: "radial-gradient(ellipse at 50% 30%, #14162e 0%, var(--bg-deep) 70%)",
     padding: 20,
     position: "relative",
-    overflow: "hidden",
+    overflow: "auto",
   };
 
   const blobStyle = (size, color, x, y, delay) => ({
-    position: "absolute",
-    width: size,
-    height: size,
+    position: "fixed",
+    width: size, height: size,
     borderRadius: "50%",
     background: color,
     filter: "blur(80px)",
     opacity: 0.15,
-    top: y,
-    left: x,
+    top: y, left: x,
     animation: `blob-float 8s ease-in-out infinite ${delay}s`,
     pointerEvents: "none",
   });
@@ -76,172 +75,125 @@ export default function Lobby() {
     zIndex: 1,
   };
 
-  const inputGroupStyle = {
-    marginBottom: 16,
-  };
+  const inputGroupStyle = { marginBottom: 16 };
 
   const labelStyle = {
-    display: "block",
-    fontSize: 13,
-    fontWeight: 600,
-    color: "var(--fg-secondary)",
-    marginBottom: 6,
-    letterSpacing: "0.3px",
+    display: "block", fontSize: 13, fontWeight: 600,
+    color: "var(--fg-secondary)", marginBottom: 6, letterSpacing: "0.3px",
   };
 
   return (
     <div style={pageStyle}>
-      {/* 背景光晕 */}
       <div style={blobStyle("400px", "var(--accent)", "-5%", "-10%", "0")} />
       <div style={blobStyle("300px", "var(--gold)", "60%", "50%", "2")} />
       <div style={blobStyle("350px", "var(--danger)", "70%", "-5%", "4")} />
 
-      <div style={cardStyle}>
-        {/* Logo区域 */}
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
+      <div style={{
+        position: "relative", zIndex: 1,
+        display: "flex", gap: 20, maxWidth: 900, margin: "0 auto",
+        alignItems: "flex-start",
+      }}>
+        {/* 左栏：创建/加入房间 */}
+        <div style={cardStyle}>
+          <div style={{ textAlign: "center", marginBottom: 32 }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: "var(--radius-lg)",
+              background: "linear-gradient(135deg, var(--accent), #a78bfa)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 16px",
+              boxShadow: "0 0 30px var(--accent-glow)",
+              fontSize: 28, fontWeight: 800, color: "white",
+            }}>狼</div>
+            <h1 style={{
+              fontSize: 24, fontWeight: 700,
+              background: "linear-gradient(135deg, var(--fg-primary), var(--accent))",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              letterSpacing: "-0.5px",
+            }}>狼人杀 AI 陪练</h1>
+            <p style={{ color: "var(--fg-muted)", fontSize: 13, marginTop: 4 }}>
+              与 AI 一起体验烧脑推理
+            </p>
+          </div>
+
           <div style={{
-            width: 64, height: 64, borderRadius: "var(--radius-lg)",
-            background: "linear-gradient(135deg, var(--accent), #a78bfa)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            margin: "0 auto 16px",
-            boxShadow: "0 0 30px var(--accent-glow)",
-            fontSize: 28, fontWeight: 800, color: "white",
-          }}>狼</div>
-          <h1 style={{
-            fontSize: 24, fontWeight: 700,
-            background: "linear-gradient(135deg, var(--fg-primary), var(--accent))",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            letterSpacing: "-0.5px",
-          }}>狼人杀 AI 陪练</h1>
-          <p style={{ color: "var(--fg-muted)", fontSize: 13, marginTop: 4 }}>
-            与 AI 一起体验烧脑推理
-          </p>
-        </div>
-
-        {/* 用户信息 */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "8px 12px", marginBottom: 20,
-          background: "var(--bg-elevated)",
-          borderRadius: "var(--radius-md)",
-          fontSize: 13,
-        }}>
-          <span style={{ color: "var(--fg-secondary)" }}>
-            {user.nickname}
-            <span style={{ marginLeft: 8, color: "var(--fg-muted)", fontSize: 12 }}>
-              Lv.{user.level}
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "8px 12px", marginBottom: 20,
+            background: "var(--bg-elevated)",
+            borderRadius: "var(--radius-md)", fontSize: 13,
+          }}>
+            <span style={{ color: "var(--fg-secondary)" }}>
+              {user.nickname}
+              <span style={{ marginLeft: 8, color: "var(--fg-muted)", fontSize: 12 }}>
+                Lv.{user.level}
+              </span>
             </span>
-          </span>
-          <button className="btn-ghost btn-sm" onClick={logout}>退出</button>
+            <button className="btn-ghost btn-sm" onClick={logout}>退出</button>
+          </div>
+
+          <div style={inputGroupStyle}>
+            <label style={labelStyle}>选择模式</label>
+            <div style={{ display: "flex", gap: 10 }}>
+              {["6", "9", "12"].map((m) => (
+                <div key={m}
+                  onClick={() => setGameMode(m)}
+                  className="card"
+                  style={{
+                    flex: 1, padding: "16px", cursor: "pointer", textAlign: "center",
+                    border: gameMode === m ? "1px solid var(--accent)" : undefined,
+                    background: gameMode === m ? "rgba(124,92,252,0.08)" : undefined,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <div style={{ fontSize: 28, fontWeight: 800, color: "var(--fg-primary)" }}>{m}</div>
+                  <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 4 }}>{m}人场</div>
+                  <div style={{ fontSize: 11, color: "var(--fg-muted)" }}>{Number(m) - 1} AI</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button
+            className="btn-primary"
+            onClick={onCreate}
+            style={{ width: "100%", padding: "12px", fontSize: 15, marginTop: 8 }}
+          >创建房间</button>
         </div>
 
-        {/* 模式切换 */}
-        <div style={{
-          display: "flex", gap: 0, marginBottom: 20,
-          background: "var(--bg-elevated)",
-          borderRadius: "var(--radius-md)",
-          padding: 3,
+        {/* 右栏：历史战绩 */}
+        <div className="card" style={{
+          flex: 1, maxWidth: 440, padding: "24px 20px",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+          zIndex: 1,
         }}>
-          {[
-            { key: "create", label: "创建房间" },
-            { key: "join", label: "加入房间" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setMode(tab.key)}
-              style={{
-                flex: 1,
-                background: mode === tab.key ? "var(--accent)" : "transparent",
-                color: mode === tab.key ? "white" : "var(--fg-secondary)",
-                boxShadow: mode === tab.key ? "0 0 15px var(--accent-glow)" : "none",
-                borderRadius: "calc(var(--radius-md) - 2px)",
-                fontWeight: 600,
-                fontSize: 13,
-              }}
-            >{tab.label}</button>
-          ))}
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>我的战绩</div>
+          {history.length === 0 ? (
+            <div style={{ color: "var(--fg-muted)", fontSize: 13, padding: "40px 0", textAlign: "center" }}>
+              暂无已结束的游戏
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {history.map((r) => (
+                <div key={r.id} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 12px",
+                  background: "var(--bg-elevated)",
+                  borderRadius: "var(--radius-md)",
+                }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{r.room_code}</div>
+                    <div style={{ fontSize: 11, color: "var(--fg-muted)", marginTop: 2 }}>
+                      {r.result === "good" ? <span style={{ color: "var(--good)" }}>好人胜</span> :
+                       r.result === "werewolf" ? <span style={{ color: "var(--wolf)" }}>狼人胜</span> :
+                       <span>进行中</span>}
+                      <span style={{ marginLeft: 8 }}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}</span>
+                    </div>
+                  </div>
+                  <button className="btn-secondary btn-sm" onClick={() => onReview(r.id)}>复盘</button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-
-        {/* 创建模式 */}
-        {mode === "create" && (
-          <div style={{ animation: "fade-in 200ms ease-out" }}>
-            <div style={inputGroupStyle}>
-              <label style={labelStyle}>选择模式</label>
-              <div style={{ display: "flex", gap: 10 }}>
-                <div
-                  onClick={() => setGameMode("6")}
-                  className="card"
-                  style={{
-                    flex: 1, padding: "16px", cursor: "pointer", textAlign: "center",
-                    border: gameMode === "6" ? "1px solid var(--accent)" : undefined,
-                    background: gameMode === "6" ? "rgba(124,92,252,0.08)" : undefined,
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <div style={{ fontSize: 28, fontWeight: 800, color: "var(--fg-primary)" }}>6</div>
-                  <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 4 }}>6人场</div>
-                  <div style={{ fontSize: 11, color: "var(--fg-muted)" }}>5 AI</div>
-                </div>
-                <div
-                  onClick={() => setGameMode("9")}
-                  className="card"
-                  style={{
-                    flex: 1, padding: "16px", cursor: "pointer", textAlign: "center",
-                    border: gameMode === "9" ? "1px solid var(--accent)" : undefined,
-                    background: gameMode === "9" ? "rgba(124,92,252,0.08)" : undefined,
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <div style={{ fontSize: 28, fontWeight: 800, color: "var(--fg-primary)" }}>9</div>
-                  <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 4 }}>9人场</div>
-                  <div style={{ fontSize: 11, color: "var(--fg-muted)" }}>8 AI</div>
-                </div>
-                <div
-                  onClick={() => setGameMode("12")}
-                  className="card"
-                  style={{
-                    flex: 1, padding: "16px", cursor: "pointer", textAlign: "center",
-                    border: gameMode === "12" ? "1px solid var(--accent)" : undefined,
-                    background: gameMode === "12" ? "rgba(124,92,252,0.08)" : undefined,
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <div style={{ fontSize: 28, fontWeight: 800, color: "var(--fg-primary)" }}>12</div>
-                  <div style={{ fontSize: 12, color: "var(--fg-muted)", marginTop: 4 }}>12人场</div>
-                  <div style={{ fontSize: 11, color: "var(--fg-muted)" }}>11 AI</div>
-                </div>
-              </div>
-            </div>
-            <button
-              className="btn-primary"
-              onClick={onCreate}
-              style={{ width: "100%", padding: "12px", fontSize: 15, marginTop: 8 }}
-            >创建房间</button>
-          </div>
-        )}
-
-        {/* 加入模式 */}
-        {mode === "join" && (
-          <div style={{ animation: "fade-in 200ms ease-out" }}>
-            <div style={inputGroupStyle}>
-              <label style={labelStyle}>房间号</label>
-              <input
-                placeholder="输入6位房间号..."
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                maxLength={6}
-                style={{ letterSpacing: 3, fontSize: 18, textAlign: "center", fontWeight: 700 }}
-              />
-            </div>
-            <button
-              className="btn-primary"
-              onClick={onJoin}
-              disabled={!joinCode}
-              style={{ width: "100%", padding: "12px", fontSize: 15, marginTop: 8 }}
-            >加入房间</button>
-          </div>
-        )}
       </div>
     </div>
   );
