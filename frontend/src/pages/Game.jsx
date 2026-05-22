@@ -140,7 +140,7 @@ export default function Game() {
               <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
                 {Object.entries(gameOver.roles || {}).map(([id, role]) => (
                   <span key={id} className={`tag ${role === "werewolf" ? "tag-wolf" : "tag-good"}`}>
-                    {displayName(id)}: {role === "werewolf" ? "狼人" : role === "seer" ? "预言家" : role === "witch" ? "女巫" : role === "hunter" ? "猎人" : "平民"}
+                    {displayName(id)}: {role === "werewolf" ? "狼人" : role === "seer" ? "预言家" : role === "witch" ? "女巫" : role === "hunter" ? "猎人" : role === "idiot" ? "白痴" : "平民"}
                   </span>
                 ))}
               </div>
@@ -149,7 +149,7 @@ export default function Game() {
         </div>
 
         {/* 右侧 - 聊天面板 */}
-        <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
+        <div style={{ height: "calc(100vh - 80px)", position: "sticky", top: 16 }}>
           <ChatPanel />
         </div>
       </div>

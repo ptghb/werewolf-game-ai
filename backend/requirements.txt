@@ -6,6 +6,10 @@ python-dotenv>=1.0
 langchain>=0.3
 langchain-openai>=0.2
 httpx>=0.27
+sqlalchemy>=2.0
+aiomysql
+passlib[bcrypt]
+python-jose[cryptography]
 
 # dev
 pytest>=8

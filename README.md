@@ -25,6 +25,52 @@ npm run dev
 
 打开 http://localhost:5173 创建或加入房间。
 
+## 用户系统
+
+项目使用 MySQL + SQLAlchemy（异步）存储用户数据，支持注册和登录。
+
+### 表结构
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | INT PK AUTO_INCREMENT | 用户ID |
+| nickname | VARCHAR(50) UNIQUE | 昵称 |
+| phone | VARCHAR(20) UNIQUE | 手机号 |
+| account | VARCHAR(50) UNIQUE | 账号 |
+| password | VARCHAR(255) | bcrypt 哈希 |
+| level | INT DEFAULT 1 | 等级 |
+| created_at | DATETIME | 创建时间 |
+| updated_at | DATETIME | 更新时间 |
+
+### 配置
+
+在 `.env` 中添加：
+
+```ini
+DATABASE_URL=mysql+aiomysql://root:password@localhost:3306/werewolf
+JWT_SECRET=your-secret-key
+```
+
+### 初始化
+
+```bash
+# 1. 创建数据库
+mysql -u root -p < backend/scripts/setup_db.sql
+
+# 2. 安装依赖
+pip install -r backend/requirements.txt
+
+# 3. 创建表
+cd backend && python -m scripts.init_db
+```
+
+### API
+
+- `POST /api/auth/register` — 注册（body: `{nickname, phone, account, password}`）
+- `POST /api/auth/login` — 登录（body: `{account, password}`），account 支持账号或手机号
+
+两者均返回 `{user: {id, nickname, phone, account, level}, token}`。
+
 ## 测试
 
 ```bash

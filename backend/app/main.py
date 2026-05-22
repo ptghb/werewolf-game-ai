@@ -18,6 +18,7 @@ from app.game.events import GameEvent
 from app.players.ai import AIPlayer
 from app.ai.llm import build_llm
 from app.rooms.room_manager import RoomManager
+from app.auth_routes import router as auth_router
 
 
 logger = logging.getLogger("werewolf")
@@ -33,6 +34,7 @@ app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
 )
 manager = RoomManager()
+app.include_router(auth_router)
 
 
 class CreateRoomBody(BaseModel):
