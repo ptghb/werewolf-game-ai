@@ -1,15 +1,24 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import useGameStore from "../store/gameStore.js";
 import { createWSClient } from "../ws/client.js";
 
 export default function Lobby() {
   const [gameMode, setGameMode] = React.useState("6");
   const [history, setHistory] = React.useState([]);
+  const [showHistory, setShowHistory] = useState(false);
   const setConnection = useGameStore((s) => s.setConnection);
   const handleEvent = useGameStore((s) => s.handleEvent);
   const user = useGameStore((s) => s.user);
   const logout = useGameStore((s) => s.logout);
   const setReview = useGameStore((s) => s.setReview);
+
+  const [isNarrow, setIsNarrow] = useState(() => window.innerWidth < 900);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 899px)");
+    const handler = (e) => setIsNarrow(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   useEffect(() => {
     fetch(`/api/auth/rooms/history?user_id=${user.id}`)
@@ -151,49 +160,116 @@ export default function Lobby() {
               ))}
             </div>
           </div>
-          <button
-            className="btn-primary"
-            onClick={onCreate}
-            style={{ width: "100%", padding: "12px", fontSize: 15, marginTop: 8 }}
-          >创建房间</button>
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              className="btn-primary"
+              onClick={onCreate}
+              style={{ flex: 1, padding: "12px", fontSize: 15, marginTop: 8 }}
+            >创建房间</button>
+            {isNarrow && (
+              <button
+                className="btn-secondary"
+                onClick={() => setShowHistory(true)}
+                style={{ padding: "12px 16px", fontSize: 13, marginTop: 8, whiteSpace: "nowrap" }}
+              >我的战绩</button>
+            )}
+          </div>
         </div>
 
-        {/* 右栏：历史战绩 */}
-        <div className="card" style={{
-          flex: 1, padding: "24px 20px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-          zIndex: 1,
-        }}>
-          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>我的战绩</div>
-          {history.length === 0 ? (
-            <div style={{ color: "var(--fg-muted)", fontSize: 13, padding: "40px 0", textAlign: "center" }}>
-              暂无已结束的游戏
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {history.map((r) => (
-                <div key={r.id} style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "10px 12px",
-                  background: "var(--bg-elevated)",
-                  borderRadius: "var(--radius-md)",
-                }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{r.room_code}</div>
-                    <div style={{ fontSize: 11, color: "var(--fg-muted)", marginTop: 2 }}>
-                      {r.result === "good" ? <span style={{ color: "var(--good)" }}>好人胜</span> :
-                       r.result === "werewolf" ? <span style={{ color: "var(--wolf)" }}>狼人胜</span> :
-                       <span>进行中</span>}
-                      <span style={{ marginLeft: 8 }}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}</span>
+        {/* 右栏：历史战绩（仅横屏） */}
+        {!isNarrow && (
+          <div className="card" style={{
+            flex: 1, padding: "24px 20px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+            zIndex: 1,
+            display: "flex", flexDirection: "column",
+            minHeight: 0, overflow: "hidden",
+          }}>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, flexShrink: 0 }}>我的战绩</div>
+            {history.length === 0 ? (
+              <div style={{ color: "var(--fg-muted)", fontSize: 13, padding: "40px 0", textAlign: "center" }}>
+                暂无已结束的游戏
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto", flex: 1, minHeight: 0 }}>
+                {history.map((r) => (
+                  <div key={r.id} style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "10px 12px",
+                    background: "var(--bg-elevated)",
+                    borderRadius: "var(--radius-md)",
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{r.room_code}</div>
+                      <div style={{ fontSize: 11, color: "var(--fg-muted)", marginTop: 2 }}>
+                        {r.result === "good" ? <span style={{ color: "var(--good)" }}>好人胜</span> :
+                         r.result === "werewolf" ? <span style={{ color: "var(--wolf)" }}>狼人胜</span> :
+                         <span>进行中</span>}
+                        <span style={{ marginLeft: 8 }}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}</span>
+                      </div>
                     </div>
+                    <button className="btn-secondary btn-sm" onClick={() => onReview(r.id)}>复盘</button>
                   </div>
-                  <button className="btn-secondary btn-sm" onClick={() => onReview(r.id)}>复盘</button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* 竖屏：我的战绩弹窗 */}
+      {showHistory && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 1000,
+          background: "rgba(0, 0, 0, 0.6)",
+          backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          padding: 20,
+        }} onClick={() => setShowHistory(false)}>
+          <div className="card animate-fade-in-up" style={{
+            width: "100%", maxWidth: 500, maxHeight: "80dvh",
+            padding: "24px 20px",
+            display: "flex", flexDirection: "column",
+            overflow: "hidden",
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              marginBottom: 16,
+            }}>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>我的战绩</div>
+              <button className="btn-ghost btn-sm" onClick={() => setShowHistory(false)}>关闭</button>
+            </div>
+            {history.length === 0 ? (
+              <div style={{ color: "var(--fg-muted)", fontSize: 13, padding: "40px 0", textAlign: "center" }}>
+                暂无已结束的游戏
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto", flex: 1 }}>
+                {history.map((r) => (
+                  <div key={r.id} style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "10px 12px",
+                    background: "var(--bg-elevated)",
+                    borderRadius: "var(--radius-md)",
+                  }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>{r.room_code}</div>
+                      <div style={{ fontSize: 11, color: "var(--fg-muted)", marginTop: 2 }}>
+                        {r.result === "good" ? <span style={{ color: "var(--good)" }}>好人胜</span> :
+                         r.result === "werewolf" ? <span style={{ color: "var(--wolf)" }}>狼人胜</span> :
+                         <span>进行中</span>}
+                        <span style={{ marginLeft: 8 }}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : ""}</span>
+                      </div>
+                    </div>
+                    <button className="btn-secondary btn-sm" onClick={() => onReview(r.id)}>复盘</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
