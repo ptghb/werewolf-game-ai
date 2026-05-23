@@ -14,7 +14,9 @@ export default function Game() {
   const displayName = (id) => playerNameById.get(id) || id;
 
   const pageStyle = {
-    minHeight: "100vh",
+    height: "100vh",
+    display: "flex",
+    flexDirection: "column",
     background: "radial-gradient(ellipse at 50% 20%, #14162e 0%, var(--bg-deep) 70%)",
     position: "relative",
     overflow: "hidden",
@@ -72,27 +74,29 @@ export default function Game() {
                   </div>
       </header>
 
+      {/* 信息条 - 顶部居中 */}
+      <div style={{
+        display: "flex", gap: 12, alignItems: "stretch", justifyContent: "center",
+        padding: "12px 24px 0",
+        position: "relative", zIndex: 1,
+      }}>
+        <RoleBadge />
+        <PhaseBanner phase={phase} day={day} deadlineTs={deadlineTs} />
+      </div>
+
       {/* 主内容区 - 响应式网格 */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "50% 1fr",
         gap: 16,
         padding: "16px 24px 24px",
-        maxWidth: 1400,
-        margin: "0 auto",
         position: "relative",
         zIndex: 1,
+        flex: 1,
+        minHeight: 0,
       }}>
-        {/* 左侧 - 游戏主区域（信息条 + 圆桌等） */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {/* 信息条 */}
-          <div style={{
-            display: "flex", gap: 12, alignItems: "stretch",
-            flexWrap: "wrap",
-          }}>
-            <RoleBadge />
-            <PhaseBanner phase={phase} day={day} deadlineTs={deadlineTs} />
-          </div>
+        {/* 左侧 - 游戏主区域（圆桌等） */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, minHeight: 0 }}>
 
           {/* 预言家查验结果 */}
           {myRole === "seer" && seerResults.length > 0 && (
@@ -123,7 +127,7 @@ export default function Game() {
         </div>
 
         {/* 右侧 - 聊天面板 */}
-        <div style={{ height: "calc(100vh - 80px)", position: "sticky", top: 16 }}>
+        <div style={{ height: "100%", minHeight: 0 }}>
           <ChatPanel />
         </div>
       </div>

@@ -15,7 +15,7 @@ export default function PlayerSeat({ player, isMe }) {
     }}>
       {/* 座位圆圈 */}
       <div style={{
-        width: 80, height: 80, borderRadius: "50%",
+        width: 72, height: 72, borderRadius: "50%",
         background: isMe
           ? "linear-gradient(135deg, var(--accent), #9278ff)"
           : "var(--bg-card)",
@@ -32,7 +32,7 @@ export default function PlayerSeat({ player, isMe }) {
       }}>
         {/* 头像 */}
         <div style={{
-          fontSize: isAI ? 18 : 20,
+          fontSize: isAI ? 16 : 18,
           fontWeight: isAI ? 400 : 700,
           color: isMe ? "white" : "var(--fg-primary)",
           lineHeight: 1,
@@ -56,9 +56,9 @@ export default function PlayerSeat({ player, isMe }) {
       {/* 昵称 */}
       <div style={{
         textAlign: "center", marginTop: 6,
-        fontSize: 11, fontWeight: isMe ? 700 : 500,
+        fontSize: 10, fontWeight: isMe ? 700 : 500,
         color: isMe ? "var(--accent)" : "var(--fg-secondary)",
-        maxWidth: 80, overflow: "hidden", textOverflow: "ellipsis",
+        maxWidth: 72, overflow: "hidden", textOverflow: "ellipsis",
         whiteSpace: "nowrap",
       }}>
         {isMe ? "你" : player.nickname}

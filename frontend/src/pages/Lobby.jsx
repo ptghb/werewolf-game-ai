@@ -44,11 +44,13 @@ export default function Lobby() {
   };
 
   const pageStyle = {
-    minHeight: "100vh",
+    height: "100vh",
+    display: "flex",
+    flexDirection: "column",
     background: "radial-gradient(ellipse at 50% 30%, #14162e 0%, var(--bg-deep) 70%)",
     padding: 20,
     position: "relative",
-    overflow: "auto",
+    overflow: "hidden",
   };
 
   const blobStyle = (size, color, x, y, delay) => ({
@@ -68,8 +70,7 @@ export default function Lobby() {
     border: "1px solid var(--border)",
     borderRadius: "var(--radius-xl)",
     padding: "40px 36px",
-    width: "100%",
-    maxWidth: 440,
+    flex: 1,
     boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
     position: "relative",
     zIndex: 1,
@@ -90,8 +91,8 @@ export default function Lobby() {
 
       <div style={{
         position: "relative", zIndex: 1,
-        display: "flex", gap: 20, maxWidth: 900, margin: "0 auto",
-        alignItems: "flex-start",
+        display: "flex", gap: 20,
+        flex: 1, minHeight: 0,
       }}>
         {/* 左栏：创建/加入房间 */}
         <div style={cardStyle}>
@@ -161,7 +162,7 @@ export default function Lobby() {
 
         {/* 右栏：历史战绩 */}
         <div className="card" style={{
-          flex: 1, maxWidth: 440, padding: "24px 20px",
+          flex: 1, padding: "24px 20px",
           boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
           zIndex: 1,
         }}>

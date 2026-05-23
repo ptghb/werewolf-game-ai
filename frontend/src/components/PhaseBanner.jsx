@@ -26,7 +26,7 @@ export default function PhaseBanner({ phase, day, deadlineTs }) {
       background: isActive ? "linear-gradient(135deg, var(--bg-card), rgba(124, 92, 252, 0.08))" : "var(--bg-card)",
       borderLeft: isActive ? "3px solid var(--accent)" : "3px solid var(--border)",
       flex: "1 1 auto",
-      minWidth: 180,
+      minWidth: 360,
     }}>
       {isActive && (
         <div style={{

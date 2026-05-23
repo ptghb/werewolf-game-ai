@@ -1,20 +1,38 @@
-import React from "react";
+import React, { useRef, useState, useEffect } from "react";
 import PlayerSeat from "./PlayerSeat.jsx";
 
+const SEAT_SIZE = 72;
+const SEAT_OFFSET = SEAT_SIZE / 2;
+
 export default function RoundTable({ players, myId }) {
-  const radius = 230;
-  const cx = 290;
-  const cy = 290;
-  const size = 600;
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ w: 600, h: 600 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setDims({ w: width, h: height });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const size = Math.min(dims.w, dims.h);
+  const radius = size * 0.38;
+  const cx = size / 2;
+  const cy = size / 2;
+  const tableSize = size * 0.33;
 
   return (
-    <div className="card" style={{
+    <div ref={containerRef} className="card" style={{
       position: "relative",
       width: "100%",
-      height: size,
+      flex: 1,
+      minHeight: 0,
       overflow: "hidden",
     }}>
-      {/* 居中容器，固定 600x600 */}
       <div style={{
         position: "absolute",
         left: "50%", top: "50%",
@@ -24,7 +42,7 @@ export default function RoundTable({ players, myId }) {
         {/* 桌子 - 发光圆环 */}
         <div style={{
           position: "absolute",
-          width: 200, height: 200,
+          width: tableSize, height: tableSize,
           borderRadius: "50%",
           background: "radial-gradient(circle, rgba(124,92,252,0.08) 0%, rgba(12,13,23,0.6) 60%, transparent 100%)",
           border: "1px solid var(--border)",
@@ -43,7 +61,7 @@ export default function RoundTable({ players, myId }) {
           textAlign: "center",
           pointerEvents: "none",
         }}>
-          <div style={{ fontSize: 18, opacity: 0.15, fontWeight: 700, letterSpacing: 2 }}>
+          <div style={{ fontSize: Math.max(14, size * 0.03), opacity: 0.15, fontWeight: 700, letterSpacing: 2 }}>
             狼人杀
           </div>
         </div>
@@ -51,8 +69,8 @@ export default function RoundTable({ players, myId }) {
         {/* 座位 */}
         {players.map((p, i) => {
           const angle = (i / players.length) * 2 * Math.PI - Math.PI / 2;
-          const x = cx + radius * Math.cos(angle) - 40;
-          const y = cy + radius * Math.sin(angle) - 40;
+          const x = cx + radius * Math.cos(angle) - SEAT_OFFSET;
+          const y = cy + radius * Math.sin(angle) - SEAT_OFFSET;
           return (
             <div
               key={p.id}
