@@ -9,7 +9,7 @@ import { ROLE_LABEL } from "../constants.js";
 
 export default function Game() {
   const { roomCode, players, playerId, phase, day, deadlineTs,
-          isHost, startGame, gameOver, myRole, seerResults, revealedRoles } = useGameStore();
+          isHost, startGame, gameOver, myRole, seerResults, revealedRoles, wolfTeammates } = useGameStore();
 
   const [isNarrow, setIsNarrow] = useState(() => window.innerWidth < 900);
   useEffect(() => {
@@ -22,9 +22,15 @@ export default function Game() {
   const displayName = (id) => playerNameById.get(id) || id;
 
   // 把自己的角色也合并到公开角色中，在圆桌上展示
-  const allRevealed = myRole
-    ? { ...revealedRoles, [playerId]: ROLE_LABEL[myRole] || myRole }
-    : revealedRoles;
+  const allRevealed = { ...revealedRoles };
+  if (myRole) {
+    allRevealed[playerId] = ROLE_LABEL[myRole] || myRole;
+  }
+  if (myRole === "werewolf" && wolfTeammates) {
+    for (const id of wolfTeammates) {
+      allRevealed[id] = "狼人";
+    }
+  }
 
   const pageStyle = {
     height: "100dvh",
