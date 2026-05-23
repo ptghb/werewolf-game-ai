@@ -195,6 +195,14 @@ async def _run_game(room) -> None:
         def _nickname(pid):
             return _player_map.get(pid, pid)
 
+        def _death_label(reason, dead, nick_fn):
+            labels = {"wolf": "狼人杀害", "vote": "投票放逐", "hunter_shot": "猎人开枪", "night": "昨夜死亡"}
+            if reason == "peaceful" or not dead:
+                return "昨夜是平安夜，无人死亡"
+            label = labels.get(reason, reason)
+            names = ",".join(nick_fn(p) for p in dead)
+            return f"{label}：{names}"
+
         def _chat_log(from_id, from_name, text):
             room.chat_log.append({"from": from_id, "from_name": from_name, "text": text})
 
@@ -202,7 +210,7 @@ async def _run_game(room) -> None:
                             start_player_id=start_id, on_chat=_chat_log,
                             on_system=lambda text: room.chat_log.append({"type": "system", "text": text}),
                             on_death=lambda dead, reason: room.chat_log.append(
-                                {"type": "system", "text": f"死亡：{','.join(_nickname(p) for p in dead)}"}))
+                                {"type": "system", "text": _death_label(reason, dead, _nickname)}))
         await engine.run_until_game_over()
         logger.info("游戏结束 | room=%s | winner=%s", room.code, engine.winner)
 
