@@ -21,6 +21,7 @@ class UserResponse(BaseModel):
     phone: str
     account: str
     level: int
+    vip: int = 0
 
     model_config = {"from_attributes": True}
 

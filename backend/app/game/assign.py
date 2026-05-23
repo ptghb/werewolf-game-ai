@@ -12,11 +12,15 @@ ROLE_POOLS = {
 }
 
 
-def assign_roles(n: int, rng: random.Random | None = None) -> list[Role]:
+def assign_roles(n: int, *, reserved_role: Role | None = None, rng: random.Random | None = None) -> list[Role]:
     if n not in ROLE_POOLS:
         raise ValueError(f"Only 6, 9, or 12-player games supported, got {n}")
     rng = rng or random.Random()
     pool = list(ROLE_POOLS[n])
+    if reserved_role is not None and reserved_role in pool:
+        pool.remove(reserved_role)
+        rng.shuffle(pool)
+        return [reserved_role] + pool
     rng.shuffle(pool)
     return pool
 

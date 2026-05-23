@@ -6,6 +6,8 @@ export default function Lobby() {
   const [gameMode, setGameMode] = React.useState("6");
   const [history, setHistory] = React.useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const preferredRole = useGameStore((s) => s.preferredRole);
+  const setPreferredRole = useGameStore((s) => s.setPreferredRole);
   const setConnection = useGameStore((s) => s.setConnection);
   const handleEvent = useGameStore((s) => s.handleEvent);
   const user = useGameStore((s) => s.user);
@@ -42,6 +44,10 @@ export default function Lobby() {
       body: JSON.stringify({ user_id: user.id, nickname: user.nickname, mode: gameMode }),
     });
     const body = await r.json();
+    if (!r.ok) {
+      alert(body.detail || "创建房间失败");
+      return;
+    }
     attach(body.room_code, body.host_id, true);
   };
 
@@ -161,6 +167,44 @@ export default function Lobby() {
             </div>
           </div>
 
+          {user.vip > 1 && (
+            <div style={{ marginTop: 8 }}>
+              <label style={labelStyle}>选择角色（VIP特权）</label>
+              <select
+                value={preferredRole}
+                onChange={(e) => setPreferredRole(e.target.value)}
+              >
+                <option value="">随机分配</option>
+                {gameMode === "6" && (
+                  <>
+                    <option value="werewolf">狼人</option>
+                    <option value="witch">女巫</option>
+                    <option value="seer">预言家</option>
+                    <option value="villager">平民</option>
+                  </>
+                )}
+                {gameMode === "9" && (
+                  <>
+                    <option value="werewolf">狼人</option>
+                    <option value="witch">女巫</option>
+                    <option value="seer">预言家</option>
+                    <option value="hunter">猎人</option>
+                    <option value="villager">平民</option>
+                  </>
+                )}
+                {gameMode === "12" && (
+                  <>
+                    <option value="werewolf">狼人</option>
+                    <option value="witch">女巫</option>
+                    <option value="seer">预言家</option>
+                    <option value="hunter">猎人</option>
+                    <option value="idiot">白痴</option>
+                    <option value="villager">平民</option>
+                  </>
+                )}
+              </select>
+            </div>
+          )}
           <div style={{ display: "flex", gap: 8 }}>
             <button
               className="btn-primary"

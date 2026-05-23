@@ -64,8 +64,8 @@ async def run_witch_action(
         else:
             logger.info("女巫不使用救药")
 
-    # Stage 2: Poison — if poison still available
-    if state.witch.poison_left:
+    # Stage 2: Poison — only if poison still available AND witch did not save this round
+    if state.witch.poison_left and not state.tonight_saved_by_witch:
         options = [p.id for p in state.alive_players() if p.id != witch.id]
         nickname_map = {p.id: p.nickname for p in state.players}
         resp = await witch.request(ActionPrompt(

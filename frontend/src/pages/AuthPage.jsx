@@ -15,6 +15,7 @@ export default function AuthPage() {
     e.preventDefault();
     setError("");
     if (mode === "register" && !nickname) { setError("请填写昵称"); return; }
+    if (mode === "register" && !phone) { setError("请填写手机号"); return; }
     if (!account) { setError("请填写账号"); return; }
     if (!password) { setError("请填写密码"); return; }
     setLoading(true);

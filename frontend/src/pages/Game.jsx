@@ -4,12 +4,13 @@ import RoundTable from "../components/RoundTable.jsx";
 import PlayerList from "../components/PlayerList.jsx";
 import ChatPanel from "../components/ChatPanel.jsx";
 import PhaseBanner from "../components/PhaseBanner.jsx";
-import ActionModal from "../components/ActionModal.jsx";
 import { ROLE_LABEL } from "../constants.js";
 
 export default function Game() {
   const { roomCode, players, playerId, phase, day, deadlineTs,
           isHost, startGame, gameOver, myRole, seerResults, revealedRoles, wolfTeammates } = useGameStore();
+  const user = useGameStore((s) => s.user);
+  const preferredRole = useGameStore((s) => s.preferredRole);
 
   const [isNarrow, setIsNarrow] = useState(() => window.innerWidth < 900);
   useEffect(() => {
@@ -83,7 +84,7 @@ export default function Game() {
           {isHost && phase === "lobby" && (
             <button
               className="btn-gold"
-              onClick={startGame}
+              onClick={() => startGame(preferredRole || undefined)}
               disabled={players.length < 6}
               style={{ fontSize: 13, padding: "8px 20px" }}
             >
@@ -152,7 +153,6 @@ export default function Game() {
         </div>
       </div>
 
-      <ActionModal />
 
       {/* 游戏结束弹窗 */}
       {gameOver && (

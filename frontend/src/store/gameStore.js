@@ -35,6 +35,7 @@ const useGameStore = create((set, get) => ({
   myRole: null,
   wolfTeammates: [],
   seerResults: [],   // [{target_id, is_wolf}]
+  preferredRole: "",
   revealedRoles: {}, // {[playerId]: roleLabel}  公开的角色信息
   witchInfo: null,
   gameOver: null,
@@ -42,6 +43,9 @@ const useGameStore = create((set, get) => ({
   reviewRoom: null,
   ws: null,
 
+  setPreferredRole(role) {
+    set({ preferredRole: role });
+  },
   setReview(room) {
     set({ reviewRoom: room, inGame: false });
   },
@@ -101,6 +105,11 @@ const useGameStore = create((set, get) => ({
           revealedRoles: { ...s.revealedRoles, [payload.shooter]: "猎人" },
         }));
       }
+    } else if (type === "error") {
+      set((s) => ({
+        systemLog: [...s.systemLog, payload.message || "未知错误"],
+        messageLog: [...s.messageLog, { type: "system", text: `错误：${payload.message || "未知错误"}` }],
+      }));
     } else if (type === "game_over") {
       const RLABEL = { werewolf: "狼人", witch: "女巫", seer: "预言家", villager: "平民", hunter: "猎人", idiot: "白痴" };
       const roles = {};
@@ -118,8 +127,8 @@ const useGameStore = create((set, get) => ({
   sendChat(channel, text) {
     get().ws?.send("chat", { channel, text });
   },
-  startGame() {
-    get().ws?.send("start_game", {});
+  startGame(preferred_role) {
+    get().ws?.send("start_game", { preferred_role });
   },
 }));
 

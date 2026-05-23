@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import date
 import json
 import logging
 import random
@@ -20,7 +21,7 @@ from app.players.ai import AIPlayer
 from app.ai.llm import build_llm
 from app.rooms.room_manager import RoomManager
 from app.auth_routes import router as auth_router
-from sqlalchemy import select
+from sqlalchemy import select, func
 from app.database.session import async_session_factory
 from app.database.models import Room as RoomModel
 
@@ -58,6 +59,20 @@ async def healthz():
 
 @app.post("/api/rooms")
 async def create_room(body: CreateRoomBody):
+    from app.database.models import User as UserModel
+    today = date.today()
+    async with async_session_factory() as session:
+        user = (await session.execute(select(UserModel).where(UserModel.id == body.user_id))).scalar_one_or_none()
+        is_vip = user is not None and user.vip != 0
+        if not is_vip:
+            stmt = select(func.count()).select_from(RoomModel).where(
+                RoomModel.creator_id == body.user_id,
+                func.date(RoomModel.created_at) == today,
+            )
+            result = await session.execute(stmt)
+            today_count = result.scalar() or 0
+            if today_count >= 3:
+                raise HTTPException(status_code=429, detail="今日游戏次数已达上限（3次），请明天再来")
     try:
         room = await manager.create_room(
             creator_id=body.user_id, host_nickname=body.nickname,
@@ -135,12 +150,13 @@ async def ws_endpoint(ws: WebSocket):
                 await room.queue.put({"type": "chat", **entry})
             elif mtype == "start_game":
                 if player.id == room.host_id:
-                    asyncio.create_task(_run_game(room))
+                    preferred = payload.get("preferred_role") if isinstance(payload, dict) else None
+                    asyncio.create_task(_run_game(room, preferred_role=preferred))
     except WebSocketDisconnect:
         await player.detach()
 
 
-async def _run_game(room) -> None:
+async def _run_game(room, preferred_role=None) -> None:
     logger.info("游戏开始 | room=%s | players=%s",
                 room.code,
                 [{"id": p.id, "nickname": p.nickname, "type": "AI" if p.is_ai else "Human"}
@@ -148,12 +164,29 @@ async def _run_game(room) -> None:
     try:
         # Assign roles
         roles = assign_roles(len(room.players))
-        wolf_ids = []
         for player, role in zip(room.players, roles):
             player.role = role
+
+        # VIP 优先选角色：把房主的角色与目标角色交换
+        if preferred_role:
+            try:
+                wanted = Role(preferred_role)
+                host = next(p for p in room.players if p.id == room.host_id)
+                logger.info("VIP优先选角 | host=%s wanted=%s current=%s", host.nickname, preferred_role, host.role.value)
+                if host.role != wanted:
+                    target = next(p for p in room.players if p.role == wanted)
+                    logger.info("VIP角色交换 | %s<->%s", host.nickname, target.nickname)
+                    host.role, target.role = target.role, host.role
+                else:
+                    logger.info("VIP角色已匹配 | host=%s role=%s", host.nickname, host.role.value)
+            except (ValueError, StopIteration) as e:
+                logger.warning("VIP优先选角失败 | error=%s", e)
+
+        wolf_ids = []
+        for player in room.players:
             logger.info("角色分配 | player=%s(%s) | seat=%s | role=%s",
-                        player.id, player.nickname, player.seat, role.value)
-            if role == Role.WEREWOLF:
+                        player.id, player.nickname, player.seat, player.role.value)
+            if player.role == Role.WEREWOLF:
                 wolf_ids.append(player.id)
         for p in room.players:
             if p.role == Role.WEREWOLF and hasattr(p, "wolf_teammates"):
