@@ -5,7 +5,6 @@ import PlayerList from "../components/PlayerList.jsx";
 import ChatPanel from "../components/ChatPanel.jsx";
 import PhaseBanner from "../components/PhaseBanner.jsx";
 import ActionModal from "../components/ActionModal.jsx";
-import RoleBadge from "../components/RoleBadge.jsx";
 import { ROLE_LABEL } from "../constants.js";
 
 export default function Game() {
@@ -21,6 +20,11 @@ export default function Game() {
   }, []);
   const playerNameById = new Map(players.map((p) => [p.id, p.nickname]));
   const displayName = (id) => playerNameById.get(id) || id;
+
+  // 把自己的角色也合并到公开角色中，在圆桌上展示
+  const allRevealed = myRole
+    ? { ...revealedRoles, [playerId]: ROLE_LABEL[myRole] || myRole }
+    : revealedRoles;
 
   const pageStyle = {
     height: "100dvh",
@@ -90,7 +94,6 @@ export default function Game() {
         padding: "12px 24px 0",
         position: "relative", zIndex: 1,
       }}>
-        <RoleBadge />
         <PhaseBanner phase={phase} day={day} deadlineTs={deadlineTs} />
       </div>
 
@@ -130,9 +133,9 @@ export default function Game() {
 
           {/* 圆桌（横屏）/ 玩家列表（竖屏） */}
           {isNarrow ? (
-            <PlayerList players={players} myId={playerId} revealedRoles={revealedRoles} />
+            <PlayerList players={players} myId={playerId} revealedRoles={allRevealed} />
           ) : (
-            <RoundTable players={players} myId={playerId} revealedRoles={revealedRoles} />
+            <RoundTable players={players} myId={playerId} revealedRoles={allRevealed} />
           )}
 
         </div>

@@ -55,8 +55,7 @@ export default function ActionModal() {
 
   return (
     <div style={{
-      position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 1000,
-      width: "50%",
+      position: "fixed", inset: 0, zIndex: 1000,
       background: "rgba(0, 0, 0, 0.6)",
       backdropFilter: "blur(4px)",
       display: "flex", alignItems: "center", justifyContent: "center",

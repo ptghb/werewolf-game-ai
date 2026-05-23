@@ -102,7 +102,12 @@ const useGameStore = create((set, get) => ({
         }));
       }
     } else if (type === "game_over") {
-      set({ gameOver: payload, phase: "game_over", revealedRoles: payload.roles });
+      const RLABEL = { werewolf: "狼人", witch: "女巫", seer: "预言家", villager: "平民", hunter: "猎人", idiot: "白痴" };
+      const roles = {};
+      for (const [id, role] of Object.entries(payload.roles)) {
+        roles[id] = RLABEL[role] || role;
+      }
+      set({ gameOver: payload, phase: "game_over", revealedRoles: roles });
     }
   },
 
