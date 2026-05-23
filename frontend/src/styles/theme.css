@@ -316,3 +316,36 @@ hr {
     font-size: 13px;
   }
 }
+
+/* 游戏页面响应式布局 */
+.game-layout {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1.2fr;
+  padding: 8px 12px 12px !important;
+}
+
+@media (min-width: 900px) {
+  .game-layout {
+    gap: 16px;
+    grid-template-columns: 50% 1fr;
+    grid-template-rows: auto;
+    padding: 16px 24px 24px !important;
+  }
+}
+
+/* 大厅页面响应式布局 */
+.lobby-layout {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 899px) {
+  .lobby-layout {
+    flex-direction: column;
+    gap: 12px;
+  }
+}

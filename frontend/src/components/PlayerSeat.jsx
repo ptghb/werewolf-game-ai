@@ -2,7 +2,7 @@ import React from "react";
 
 const ROLE_ICONS = { werewolf: "🐺", witch: "🧪", seer: "🔮", villager: "👤", hunter: "🏹", idiot: "🗿" };
 
-export default function PlayerSeat({ player, isMe }) {
+export default function PlayerSeat({ player, isMe, revealedRole }) {
   const alive = player.alive !== false;
   const isAI = player.is_ai;
 
@@ -63,6 +63,17 @@ export default function PlayerSeat({ player, isMe }) {
       }}>
         {isMe ? "你" : player.nickname}
       </div>
+
+      {/* 公开角色标签 */}
+      {revealedRole && (
+        <div style={{
+          textAlign: "center", marginTop: 2,
+          fontSize: 10, fontWeight: 600,
+          color: "var(--accent)",
+        }}>
+          {revealedRole}
+        </div>
+      )}
 
       {/* AI 标签 */}
       {isAI && alive && (

@@ -35,6 +35,7 @@ const useGameStore = create((set, get) => ({
   myRole: null,
   wolfTeammates: [],
   seerResults: [],   // [{target_id, is_wolf}]
+  revealedRoles: {}, // {[playerId]: roleLabel}  公开的角色信息
   witchInfo: null,
   gameOver: null,
   promptAction: null, // {action, options, deadline_ts, hint}
@@ -84,11 +85,24 @@ const useGameStore = create((set, get) => ({
         };
       });
     } else if (type === "seer_result") {
-      set((s) => ({ seerResults: [...s.seerResults, payload] }));
+      set((s) => ({
+        seerResults: [...s.seerResults, payload],
+        revealedRoles: { ...s.revealedRoles, [payload.target_id]: payload.is_wolf ? "狼人" : "好人" },
+      }));
     } else if (type === "witch_info") {
       set({ witchInfo: payload });
+    } else if (type === "idiot_reveal") {
+      set((s) => ({
+        revealedRoles: { ...s.revealedRoles, [payload.player_id]: "白痴" },
+      }));
+    } else if (type === "hunter_shot") {
+      if (payload.shooter) {
+        set((s) => ({
+          revealedRoles: { ...s.revealedRoles, [payload.shooter]: "猎人" },
+        }));
+      }
     } else if (type === "game_over") {
-      set({ gameOver: payload, phase: "game_over" });
+      set({ gameOver: payload, phase: "game_over", revealedRoles: payload.roles });
     }
   },
 

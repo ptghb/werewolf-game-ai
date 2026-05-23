@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import useGameStore from "../store/gameStore.js";
 import RoundTable from "../components/RoundTable.jsx";
+import PlayerList from "../components/PlayerList.jsx";
 import ChatPanel from "../components/ChatPanel.jsx";
 import PhaseBanner from "../components/PhaseBanner.jsx";
 import ActionModal from "../components/ActionModal.jsx";
@@ -9,12 +10,20 @@ import { ROLE_LABEL } from "../constants.js";
 
 export default function Game() {
   const { roomCode, players, playerId, phase, day, deadlineTs,
-          isHost, startGame, gameOver, myRole, seerResults } = useGameStore();
+          isHost, startGame, gameOver, myRole, seerResults, revealedRoles } = useGameStore();
+
+  const [isNarrow, setIsNarrow] = useState(() => window.innerWidth < 900);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 899px)");
+    const handler = (e) => setIsNarrow(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
   const playerNameById = new Map(players.map((p) => [p.id, p.nickname]));
   const displayName = (id) => playerNameById.get(id) || id;
 
   const pageStyle = {
-    height: "100vh",
+    height: "100dvh",
     display: "flex",
     flexDirection: "column",
     background: "radial-gradient(ellipse at 50% 20%, #14162e 0%, var(--bg-deep) 70%)",
@@ -77,6 +86,7 @@ export default function Game() {
       {/* 信息条 - 顶部居中 */}
       <div style={{
         display: "flex", gap: 12, alignItems: "stretch", justifyContent: "center",
+        flexWrap: "wrap",
         padding: "12px 24px 0",
         position: "relative", zIndex: 1,
       }}>
@@ -85,10 +95,7 @@ export default function Game() {
       </div>
 
       {/* 主内容区 - 响应式网格 */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "50% 1fr",
-        gap: 16,
+      <div className="game-layout" style={{
         padding: "16px 24px 24px",
         position: "relative",
         zIndex: 1,
@@ -121,8 +128,12 @@ export default function Game() {
             </div>
           )}
 
-          {/* 圆桌 */}
-          <RoundTable players={players} myId={playerId} />
+          {/* 圆桌（横屏）/ 玩家列表（竖屏） */}
+          {isNarrow ? (
+            <PlayerList players={players} myId={playerId} revealedRoles={revealedRoles} />
+          ) : (
+            <RoundTable players={players} myId={playerId} revealedRoles={revealedRoles} />
+          )}
 
         </div>
 

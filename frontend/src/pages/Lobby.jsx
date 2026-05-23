@@ -44,7 +44,7 @@ export default function Lobby() {
   };
 
   const pageStyle = {
-    height: "100vh",
+    height: "100dvh",
     display: "flex",
     flexDirection: "column",
     background: "radial-gradient(ellipse at 50% 30%, #14162e 0%, var(--bg-deep) 70%)",
@@ -89,10 +89,8 @@ export default function Lobby() {
       <div style={blobStyle("300px", "var(--gold)", "60%", "50%", "2")} />
       <div style={blobStyle("350px", "var(--danger)", "70%", "-5%", "4")} />
 
-      <div style={{
+      <div className="lobby-layout" style={{
         position: "relative", zIndex: 1,
-        display: "flex", gap: 20,
-        flex: 1, minHeight: 0,
       }}>
         {/* 左栏：创建/加入房间 */}
         <div style={cardStyle}>

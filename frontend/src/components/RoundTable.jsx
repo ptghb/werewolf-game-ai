@@ -4,7 +4,7 @@ import PlayerSeat from "./PlayerSeat.jsx";
 const SEAT_SIZE = 72;
 const SEAT_OFFSET = SEAT_SIZE / 2;
 
-export default function RoundTable({ players, myId }) {
+export default function RoundTable({ players, myId, revealedRoles = {} }) {
   const containerRef = useRef(null);
   const [dims, setDims] = useState({ w: 600, h: 600 });
 
@@ -81,7 +81,7 @@ export default function RoundTable({ players, myId }) {
                 transition: "all 0.3s ease",
               }}
             >
-              <PlayerSeat player={p} isMe={p.id === myId} />
+              <PlayerSeat player={p} isMe={p.id === myId} revealedRole={revealedRoles[p.id]} />
             </div>
           );
         })}
