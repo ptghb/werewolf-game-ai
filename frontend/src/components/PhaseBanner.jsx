@@ -7,7 +7,7 @@ const PHASE_LABELS = {
   hunter_shot: "🏹 猎人开枪", check_win: "⚖️ 判定胜负", game_over: "🏁 游戏结束",
 };
 
-export default function PhaseBanner({ phase, day, deadlineTs }) {
+export default function PhaseBanner({ phase, day, deadlineTs, winner }) {
   const [remaining, setRemaining] = useState(null);
   useEffect(() => {
     if (!deadlineTs) { setRemaining(null); return; }
@@ -18,6 +18,9 @@ export default function PhaseBanner({ phase, day, deadlineTs }) {
   }, [deadlineTs]);
 
   const isActive = phase !== "lobby" && phase !== "game_over";
+  const phaseLabel = phase === "game_over" && winner
+    ? (winner === "good" ? "🏆 好人阵营胜利" : "🐺 狼人阵营胜利")
+    : (PHASE_LABELS[phase] || phase);
 
   return (
     <div className="card" style={{
@@ -40,7 +43,7 @@ export default function PhaseBanner({ phase, day, deadlineTs }) {
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 13, fontWeight: 600 }}>
           {day > 0 && <span style={{ color: "var(--fg-muted)", fontWeight: 400 }}>第{day}天 · </span>}
-          {PHASE_LABELS[phase] || phase}
+          {phaseLabel}
         </div>
       </div>
       {remaining != null && (

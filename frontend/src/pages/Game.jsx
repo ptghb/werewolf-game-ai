@@ -101,7 +101,7 @@ export default function Game() {
         padding: "12px 24px 0",
         position: "relative", zIndex: 1,
       }}>
-        <PhaseBanner phase={phase} day={day} deadlineTs={deadlineTs} />
+        <PhaseBanner phase={phase} day={day} deadlineTs={deadlineTs} winner={gameOver?.winner} />
       </div>
 
       {/* 主内容区 - 响应式网格 */}
@@ -152,46 +152,6 @@ export default function Game() {
           <ChatPanel />
         </div>
       </div>
-
-
-      {/* 游戏结束弹窗 */}
-      {gameOver && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 1000,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(0,0,0,0.6)",
-          backdropFilter: "blur(4px)",
-          animation: "fade-in 300ms ease-out",
-        }}>
-          <div className="card" style={{
-            maxWidth: 480, width: "90%",
-            padding: "32px 28px",
-            textAlign: "center",
-            border: gameOver.winner === "good" ? "1px solid var(--good)" : "1px solid var(--wolf)",
-            animation: "fade-in-up 400ms ease-out",
-          }}>
-            <div style={{ fontSize: 48, marginBottom: 8 }}>
-              {gameOver.winner === "good" ? "🏆" : "🐺"}
-            </div>
-            <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>
-              {gameOver.winner === "good" ? "好人阵营胜利！" : "狼人阵营胜利！"}
-            </div>
-            <p style={{ color: "var(--fg-secondary)", fontSize: 13, marginBottom: 16 }}>
-              最终角色身份
-            </p>
-            <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginBottom: 24 }}>
-              {Object.entries(gameOver.roles || {}).map(([id, role]) => (
-                <span key={id} className={`tag ${role === "werewolf" ? "tag-wolf" : "tag-good"}`}>
-                  {displayName(id)}: {ROLE_LABEL[role] || "平民"}
-                </span>
-              ))}
-            </div>
-            <button className="btn-primary" onClick={() => window.location.reload()} style={{ padding: "10px 32px", fontSize: 14 }}>
-              返回大厅
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

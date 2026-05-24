@@ -133,11 +133,18 @@ const useGameStore = create((set, get) => ({
       set({ revealedRoles: roles });
     } else if (type === "game_over") {
       const RLABEL = { werewolf: "狼人", witch: "女巫", seer: "预言家", villager: "平民", hunter: "猎人", idiot: "白痴" };
+      const winnerText = payload.winner === "good" ? "好人阵营胜利" : "狼人阵营胜利";
       const roles = {};
       for (const [id, role] of Object.entries(payload.roles)) {
         roles[id] = RLABEL[role] || role;
       }
-      set({ gameOver: payload, phase: "game_over", revealedRoles: roles });
+      set((s) => ({
+        gameOver: payload,
+        phase: "game_over",
+        revealedRoles: roles,
+        systemLog: [...s.systemLog, `游戏结束：${winnerText}`],
+        messageLog: [...s.messageLog, { type: "system", text: `游戏结束：${winnerText}` }],
+      }));
     }
   },
 
