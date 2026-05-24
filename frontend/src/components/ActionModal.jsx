@@ -8,6 +8,7 @@ const ACTION_LABELS = {
   witch_poison: "女巫毒药",
   day_vote: "投出警徽",
   day_vote_pk: "PK 投票",
+  hunter_shot: "猎人开枪",
   speech: "你的发言",
   last_words: "遗言",
 };
@@ -19,6 +20,7 @@ const ACTION_ICONS = {
   witch_poison: "🧪",
   day_vote: "🗳️",
   day_vote_pk: "🗳️",
+  hunter_shot: "🎯",
   speech: "💬",
   last_words: "💀",
 };

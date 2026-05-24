@@ -8,7 +8,7 @@ import { ROLE_LABEL } from "../constants.js";
 
 export default function Game() {
   const { roomCode, players, playerId, phase, day, deadlineTs,
-          isHost, startGame, gameOver, myRole, seerResults, revealedRoles, wolfTeammates } = useGameStore();
+          isHost, startGame, gameOver, returnToLobby, myRole, seerResults, revealedRoles, wolfTeammates } = useGameStore();
   const user = useGameStore((s) => s.user);
   const preferredRole = useGameStore((s) => s.preferredRole);
 
@@ -81,7 +81,15 @@ export default function Game() {
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {isHost && phase === "lobby" && (
+          {gameOver ? (
+            <button
+              className="btn-primary"
+              onClick={returnToLobby}
+              style={{ fontSize: 13, padding: "8px 20px" }}
+            >
+              返回大厅
+            </button>
+          ) : isHost && phase === "lobby" && (
             <button
               className="btn-gold"
               onClick={() => startGame(preferredRole || undefined)}

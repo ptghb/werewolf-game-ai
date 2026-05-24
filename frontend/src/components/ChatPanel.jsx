@@ -10,6 +10,7 @@ const ACTION_LABELS = {
   witch_poison: "女巫毒药",
   day_vote: "投票放逐",
   day_vote_pk: "PK 投票",
+  hunter_shot: "猎人开枪",
 };
 
 const ACTION_ICONS = {
@@ -19,6 +20,7 @@ const ACTION_ICONS = {
   witch_poison: "🧪",
   day_vote: "🗳️",
   day_vote_pk: "🗳️",
+  hunter_shot: "🎯",
 };
 
 function optionLabel(id, players) {

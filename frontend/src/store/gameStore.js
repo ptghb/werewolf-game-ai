@@ -61,6 +61,32 @@ const useGameStore = create((set, get) => ({
     set({ ws, roomCode, playerId, isHost, inGame: true });
   },
 
+  returnToLobby() {
+    get().ws?.close?.();
+    set({
+      inGame: false,
+      roomCode: "",
+      playerId: "",
+      isHost: false,
+      players: [],
+      hostId: "",
+      phase: "lobby",
+      day: 0,
+      deadlineTs: null,
+      chat: [],
+      systemLog: [],
+      messageLog: [],
+      myRole: null,
+      wolfTeammates: [],
+      seerResults: [],
+      revealedRoles: {},
+      witchInfo: null,
+      gameOver: null,
+      promptAction: null,
+      ws: null,
+    });
+  },
+
   handleEvent(msg) {
     const { type, payload } = msg;
     if (type === "room_state") {
