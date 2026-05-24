@@ -53,6 +53,24 @@ export default function Lobby() {
     attach(body.room_code, body.host_id, true);
   };
 
+  const onGodMode = async () => {
+    const r = await fetch("/api/rooms", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ user_id: user.id, nickname: user.nickname, mode: gameMode, god_mode: true }),
+    });
+    const body = await r.json();
+    if (!r.ok) { alert(body.detail || "创建失败"); return; }
+    const wsClient = createWSClient({
+      url: `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`,
+      room: body.room_code, playerId: body.host_id, spectator: true,
+      onMessage: handleEvent,
+    });
+    setConnection({ ws: wsClient, roomCode: body.room_code, playerId: body.host_id, isHost: true });
+    setTimeout(() => {
+      wsClient.send("start_game", { preferred_role: preferredRole || undefined });
+    }, 2000);
+  };
+
   const onReview = (roomId) => {
     fetch(`/api/auth/rooms/history/${roomId}`)
       .then((r) => r.json())
@@ -169,15 +187,7 @@ export default function Lobby() {
             </div>
           </div>
 
-          {user.vip > 2 && (
-            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
-              <label style={{ fontSize: 13, color: "var(--fg-secondary)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                <input type="checkbox" checked={godMode} onChange={(e) => setGodMode(e.target.checked)}
-                  style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--accent)" }} />
-                上帝视角（观战模式）
-              </label>
-            </div>
-          )}
+          
           {user.vip > 1 && (
             <div style={{ marginTop: 8 }}>
               <label style={labelStyle}>选择角色（VIP特权）</label>
@@ -216,12 +226,21 @@ export default function Lobby() {
               </select>
             </div>
           )}
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
             <button
               className="btn-primary"
               onClick={onCreate}
-              style={{ flex: 1, padding: "12px", fontSize: 15, marginTop: 8 }}
+              style={{ flex: 1, padding: "12px", fontSize: 15 }}
             >创建房间</button>
+            {user.vip > 2 && (
+              <button
+                className="btn-gold"
+                onClick={onGodMode}
+                style={{ flex: 1, padding: "12px", fontSize: 13 }}
+              >
+                上帝视角
+              </button>
+            )}
             {isNarrow && (
               <button
                 className="btn-secondary"
