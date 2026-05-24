@@ -36,6 +36,7 @@ const useGameStore = create((set, get) => ({
   wolfTeammates: [],
   seerResults: [],   // [{target_id, is_wolf}]
   preferredRole: "",
+  godMode: false,
   revealedRoles: {}, // {[playerId]: roleLabel}  公开的角色信息
   witchInfo: null,
   gameOver: null,
@@ -43,6 +44,9 @@ const useGameStore = create((set, get) => ({
   reviewRoom: null,
   ws: null,
 
+  setGodMode(on) {
+    set({ godMode: on });
+  },
   setPreferredRole(role) {
     set({ preferredRole: role });
   },
@@ -68,6 +72,16 @@ const useGameStore = create((set, get) => ({
             day: payload.day ?? get().day });
     } else if (type === "prompt_action") {
       set({ promptAction: payload });
+      if (get().godMode) {
+        const opts = payload.options || [];
+        const defTarget = opts.length > 0 ? opts[0] : null;
+        setTimeout(() => {
+          const s = get();
+          if (s.promptAction?.action === payload.action) {
+            s.sendAction({ action: payload.action, target: defTarget });
+          }
+        }, 800);
+      }
     } else if (type === "chat_message") {
       set((s) => ({ chat: [...s.chat, payload],
                     messageLog: [...s.messageLog, { type: "chat", ...payload }] }));
@@ -110,6 +124,13 @@ const useGameStore = create((set, get) => ({
         systemLog: [...s.systemLog, payload.message || "未知错误"],
         messageLog: [...s.messageLog, { type: "system", text: `错误：${payload.message || "未知错误"}` }],
       }));
+    } else if (type === "god_mode_roles") {
+      const RLABEL = { werewolf: "狼人", witch: "女巫", seer: "预言家", villager: "平民", hunter: "猎人", idiot: "白痴" };
+      const roles = {};
+      for (const [id, role] of Object.entries(payload.roles)) {
+        roles[id] = RLABEL[role] || role;
+      }
+      set({ revealedRoles: roles });
     } else if (type === "game_over") {
       const RLABEL = { werewolf: "狼人", witch: "女巫", seer: "预言家", villager: "平民", hunter: "猎人", idiot: "白痴" };
       const roles = {};
@@ -128,7 +149,8 @@ const useGameStore = create((set, get) => ({
     get().ws?.send("chat", { channel, text });
   },
   startGame(preferred_role) {
-    get().ws?.send("start_game", { preferred_role });
+    const { godMode } = get();
+    get().ws?.send("start_game", { preferred_role, god_mode: godMode });
   },
 }));
 

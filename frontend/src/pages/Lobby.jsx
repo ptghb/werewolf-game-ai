@@ -8,6 +8,8 @@ export default function Lobby() {
   const [showHistory, setShowHistory] = useState(false);
   const preferredRole = useGameStore((s) => s.preferredRole);
   const setPreferredRole = useGameStore((s) => s.setPreferredRole);
+  const godMode = useGameStore((s) => s.godMode);
+  const setGodMode = useGameStore((s) => s.setGodMode);
   const setConnection = useGameStore((s) => s.setConnection);
   const handleEvent = useGameStore((s) => s.handleEvent);
   const user = useGameStore((s) => s.user);
@@ -32,7 +34,7 @@ export default function Lobby() {
   const attach = (roomCode, playerId, isHost) => {
     const ws = createWSClient({
       url: `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`,
-      room: roomCode, playerId,
+      room: roomCode, playerId, spectator: godMode,
       onMessage: handleEvent,
     });
     setConnection({ ws, roomCode, playerId, isHost });
@@ -41,7 +43,7 @@ export default function Lobby() {
   const onCreate = async () => {
     const r = await fetch("/api/rooms", {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ user_id: user.id, nickname: user.nickname, mode: gameMode }),
+      body: JSON.stringify({ user_id: user.id, nickname: user.nickname, mode: gameMode, god_mode: godMode }),
     });
     const body = await r.json();
     if (!r.ok) {
@@ -167,6 +169,15 @@ export default function Lobby() {
             </div>
           </div>
 
+          {user.vip > 2 && (
+            <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8 }}>
+              <label style={{ fontSize: 13, color: "var(--fg-secondary)", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                <input type="checkbox" checked={godMode} onChange={(e) => setGodMode(e.target.checked)}
+                  style={{ width: 16, height: 16, cursor: "pointer", accentColor: "var(--accent)" }} />
+                上帝视角（观战模式）
+              </label>
+            </div>
+          )}
           {user.vip > 1 && (
             <div style={{ marginTop: 8 }}>
               <label style={labelStyle}>选择角色（VIP特权）</label>

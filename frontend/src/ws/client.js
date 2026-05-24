@@ -1,6 +1,6 @@
 // Tiny WebSocket client with seq dedupe + auto-reconnect + ack.
 // Intentionally untested — behavior is covered by end-to-end manual smoke.
-export function createWSClient({ url, room, playerId, onMessage }) {
+export function createWSClient({ url, room, playerId, onMessage, spectator = false }) {
   let ws = null;
   let lastAckSeq = 0;
   let shouldReconnect = true;
@@ -12,6 +12,7 @@ export function createWSClient({ url, room, playerId, onMessage }) {
       reconnectDelay = 500;
       ws.send(JSON.stringify({
         type: "hello", room, player_id: playerId, last_ack_seq: lastAckSeq,
+        spectator,
       }));
     };
     ws.onmessage = (ev) => {

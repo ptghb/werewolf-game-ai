@@ -19,6 +19,7 @@ class Room:
     queue: asyncio.Queue = field(default_factory=asyncio.Queue)
     created_at: float = 0.0
     chat_log: list[dict] = field(default_factory=list)
+    spectators: list = field(default_factory=list)  # WebSocket connections
 
     @property
     def full(self) -> bool:

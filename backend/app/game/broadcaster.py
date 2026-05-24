@@ -11,11 +11,13 @@ from app.players.base import Player
 
 class Broadcaster:
     def __init__(self, state: GameState, players: Iterable[Player],
+                 spectators: list | None = None,
                  on_chat: Optional[Callable[[str, str, str], None]] = None,
                  on_system: Optional[Callable[[str], None]] = None,
                  on_death: Optional[Callable[[list[str], str], None]] = None):
         self.state = state
         self.players = list(players)
+        self.spectators = spectators or []
         self.on_chat = on_chat
         self.on_system = on_system
         self.on_death = on_death
@@ -35,6 +37,15 @@ class Broadcaster:
             self.on_death(event.payload.get("dead", []),
                           event.payload.get("reason", ""))
         await asyncio.gather(*(p.notify(event) for p in targets))
+        # Also broadcast to spectators (for "all" audience events)
+        if event.audience == "all" and self.spectators:
+            import json
+            env = {"type": event.type, "payload": event.payload}
+            for ws in self.spectators:
+                try:
+                    await ws.send_json(env)
+                except Exception:
+                    pass
 
 
 __all__ = ["Broadcaster"]

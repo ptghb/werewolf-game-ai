@@ -47,6 +47,7 @@ class GameEngine:
         on_chat: Optional[Callable[[str, str, str], None]] = None,
         on_system: Optional[Callable[[str], None]] = None,
         on_death: Optional[Callable[[list[str], str], None]] = None,
+        spectators: list | None = None,
     ):
         self.players = list(players)
         self.rng = rng or random.Random()
@@ -67,6 +68,7 @@ class GameEngine:
             on_chat=on_chat,
             on_system=on_system,
             on_death=on_death,
+            spectators=spectators,
         )
         self.start_player_id = start_player_id or player_states[0].id
         self.winner: str | None = None

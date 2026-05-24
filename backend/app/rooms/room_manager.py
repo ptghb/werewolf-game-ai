@@ -25,7 +25,7 @@ class RoomManager:
         self._rooms: Dict[str, Room] = {}
         self._lock = Lock()
 
-    async def create_room(self, *, creator_id: int, host_nickname: str, mode: str = "6") -> Room:
+    async def create_room(self, *, creator_id: int, host_nickname: str, mode: str = "6", god_mode: bool = False) -> Room:
         if mode == "6":
             ai_slots = 5
         elif mode == "9":
@@ -39,8 +39,14 @@ class RoomManager:
             while code in self._rooms:
                 code = _new_code()
             host_id = f"h_{uuid.uuid4().hex[:8]}"
-            host = HumanPlayer(id=host_id, nickname=host_nickname,
-                               role=Role.VILLAGER, seat=0)
+            if god_mode:
+                import uuid as _uuid
+                ai_id = f"ai_{_uuid.uuid4().hex[:8]}"
+                host = AIPlayer(id=ai_id, nickname=host_nickname, role=Role.VILLAGER, seat=0)
+                host_id = ai_id
+            else:
+                host = HumanPlayer(id=host_id, nickname=host_nickname,
+                                   role=Role.VILLAGER, seat=0)
             ai_players = []
             nickname_counts: Dict[str, int] = {}
             for i in range(ai_slots):

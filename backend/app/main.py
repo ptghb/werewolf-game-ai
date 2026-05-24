@@ -46,6 +46,7 @@ class CreateRoomBody(BaseModel):
     user_id: int
     nickname: str
     mode: str = "6"
+    god_mode: bool = False
 
 
 class JoinRoomBody(BaseModel):
@@ -76,7 +77,7 @@ async def create_room(body: CreateRoomBody):
     try:
         room = await manager.create_room(
             creator_id=body.user_id, host_nickname=body.nickname,
-            mode=body.mode,
+            mode=body.mode, god_mode=body.god_mode,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -102,6 +103,42 @@ async def ws_endpoint(ws: WebSocket):
     if hello.get("type") != "hello":
         await ws.close(code=1003)
         return
+    if hello.get("spectator"):
+        room = manager.get_room(hello.get("room"))
+        if room is None:
+            await ws.send_json({"type": "error", "payload": {"code": "no_room", "message": "unknown room"}})
+            await ws.close()
+            return
+        room.spectators.append(ws)
+        # Send room state to spectator
+        await ws.send_json({
+            "type": "room_state",
+            "payload": {
+                "room_code": room.code,
+                "host_id": room.host_id,
+                "players": [
+                    {
+                        "id": p.id, "nickname": p.nickname,
+                        "seat": p.seat, "is_ai": p.is_ai,
+                        "alive": p.alive,
+                        "connected": getattr(p, "socket", None) is not None or p.is_ai,
+                    }
+                    for p in room.players
+                ],
+            },
+        })
+        try:
+            while True:
+                msg = await ws.receive_json()
+                if msg.get("type") == "start_game":
+                    payload = msg.get("payload", {}) or {}
+                    preferred = payload.get("preferred_role") if isinstance(payload, dict) else None
+                    asyncio.create_task(_run_game(room, preferred_role=preferred, god_mode=True))
+        except WebSocketDisconnect:
+            if ws in room.spectators:
+                room.spectators.remove(ws)
+        return
+
     room = manager.get_room(hello.get("room"))
     if room is None:
         await ws.send_json({"type": "error", "payload": {"code": "no_room", "message": "unknown room"}})
@@ -151,12 +188,13 @@ async def ws_endpoint(ws: WebSocket):
             elif mtype == "start_game":
                 if player.id == room.host_id:
                     preferred = payload.get("preferred_role") if isinstance(payload, dict) else None
-                    asyncio.create_task(_run_game(room, preferred_role=preferred))
+                    god_mode = payload.get("god_mode") if isinstance(payload, dict) else False
+                    asyncio.create_task(_run_game(room, preferred_role=preferred, god_mode=god_mode))
     except WebSocketDisconnect:
         await player.detach()
 
 
-async def _run_game(room, preferred_role=None) -> None:
+async def _run_game(room, preferred_role=None, god_mode=False) -> None:
     logger.info("游戏开始 | room=%s | players=%s",
                 room.code,
                 [{"id": p.id, "nickname": p.nickname, "type": "AI" if p.is_ai else "Human"}
@@ -199,6 +237,15 @@ async def _run_game(room, preferred_role=None) -> None:
                 audience=f"player:{p.id}",
             ))
 
+        # 上帝视角：发送所有角色信息给观战者
+        if god_mode:
+            all_roles = {p.id: p.role.value for p in room.players}
+            for ws in room.spectators:
+                try:
+                    await ws.send_json({"type": "god_mode_roles", "payload": {"roles": all_roles}})
+                except Exception:
+                    pass
+
         # Attach llm lazily for AI players
         for p in room.players:
             if isinstance(p, AIPlayer) and p.llm is None:
@@ -239,7 +286,7 @@ async def _run_game(room, preferred_role=None) -> None:
         def _chat_log(from_id, from_name, text):
             room.chat_log.append({"from": from_id, "from_name": from_name, "text": text})
 
-        engine = GameEngine(room_code=room.code, players=room.players,
+        engine = GameEngine(room_code=room.code, players=room.players, spectators=room.spectators,
                             start_player_id=start_id, on_chat=_chat_log,
                             on_system=lambda text: room.chat_log.append({"type": "system", "text": text}),
                             on_death=lambda dead, reason: room.chat_log.append(

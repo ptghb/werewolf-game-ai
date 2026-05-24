@@ -27,7 +27,7 @@ function optionLabel(id, players) {
 }
 
 export default function ChatPanel() {
-  const { messageLog, promptAction, sendAction, players } = useGameStore();
+  const { messageLog, promptAction, sendAction, players, godMode } = useGameStore();
   const speechPrompt = promptAction && SPEECH_PHASES.has(promptAction.action) ? promptAction : null;
   const actionPrompt = promptAction && !SPEECH_PHASES.has(promptAction.action) ? promptAction : null;
   const muted = !speechPrompt;
@@ -260,7 +260,7 @@ export default function ChatPanel() {
       </div>
 
       {/* 动作区 / 发送区 */}
-      {actionPrompt ? (
+      {!godMode && actionPrompt ? (
         renderActionArea()
       ) : (
         <div style={{
