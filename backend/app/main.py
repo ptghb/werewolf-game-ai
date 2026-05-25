@@ -21,9 +21,10 @@ from app.players.ai import AIPlayer
 from app.ai.llm import build_llm
 from app.rooms.room_manager import RoomManager
 from app.auth_routes import router as auth_router
+from app.llm_routes import router as llm_router
 from sqlalchemy import select, func
 from app.database.session import async_session_factory
-from app.database.models import Room as RoomModel
+from app.database.models import Llmtoken, Room as RoomModel
 
 
 logger = logging.getLogger("werewolf")
@@ -40,6 +41,7 @@ app.add_middleware(
 )
 manager = RoomManager()
 app.include_router(auth_router)
+app.include_router(llm_router)
 
 
 class CreateRoomBody(BaseModel):
@@ -246,11 +248,38 @@ async def _run_game(room, preferred_role=None, god_mode=False) -> None:
                 except Exception:
                     pass
 
-        # Attach llm lazily for AI players
+        # Attach llm lazily for AI players — prefer user's own LLM token
+        user_llm_config = None
+        if room.creator_user_id:
+            try:
+                async with async_session_factory() as session:
+                    row = (await session.execute(
+                        select(Llmtoken)
+                        .where(
+                            Llmtoken.user_id == room.creator_user_id,
+                            Llmtoken.enable == 1,
+                            Llmtoken.del_flag == 0,
+                        )
+                        .limit(1)
+                    )).scalar_one_or_none()
+                    if row:
+                        user_llm_config = (row.base_url, row.api_key, row.model)
+                        logger.info("使用用户 LLM Token | user_id=%s | model=%s | base_url=%s",
+                                    room.creator_user_id, row.model, row.base_url)
+                    else:
+                        logger.info("未找到用户 LLM Token | user_id=%s | 使用全局配置", room.creator_user_id)
+            except Exception as e:
+                logger.warning("查询用户 LLM Token 失败 | error=%s", e)
+        else:
+            logger.info("creator_user_id 为 0，使用全局配置")
         for p in room.players:
             if isinstance(p, AIPlayer) and p.llm is None:
                 try:
-                    p.llm = build_llm()
+                    if user_llm_config:
+                        base_url, api_key, model = user_llm_config
+                        p.llm = build_llm(base_url=base_url, api_key=api_key, model=model)
+                    else:
+                        p.llm = build_llm()
                 except Exception:
                     p.llm = None  # fallback path kicks in inside AIPlayer
 

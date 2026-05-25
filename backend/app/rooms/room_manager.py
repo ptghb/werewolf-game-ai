@@ -62,7 +62,8 @@ class RoomManager:
                 ))
             room = Room(code=code, host_id=host_id,
                         human_slots=1, ai_slots=ai_slots,
-                        players=[host, *ai_players], created_at=time.time())
+                        players=[host, *ai_players], created_at=time.time(),
+                        creator_user_id=creator_id)
             self._rooms[code] = room
 
         # 写入 rooms 表

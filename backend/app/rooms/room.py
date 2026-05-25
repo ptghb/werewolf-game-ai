@@ -20,6 +20,7 @@ class Room:
     created_at: float = 0.0
     chat_log: list[dict] = field(default_factory=list)
     spectators: list = field(default_factory=list)  # WebSocket connections
+    creator_user_id: int = 0  # database user id for LLM token lookup
 
     @property
     def full(self) -> bool:
