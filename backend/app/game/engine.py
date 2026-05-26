@@ -80,10 +80,12 @@ class GameEngine:
         logger.info("========== 第 %d 天 ==========", self.state.day_number + 1)
         self.state.phase = Phase.NIGHT_START
         logger.info("天黑 | day=%d", self.state.day_number + 1)
-        await self.broadcaster.broadcast(GameEvent(
-            type="system_announce",
-            payload={"text": "天黑请闭眼"},
-        ))
+        # main.py 在启动第一轮前已主动发送 phase_change=night_start，避免重复播报
+        if self.state.day_number > 0:
+            await self.broadcaster.broadcast(GameEvent(
+                type="system_announce",
+                payload={"text": "天黑请闭眼"},
+            ))
 
         await run_wolf_kill(
             self.state,
