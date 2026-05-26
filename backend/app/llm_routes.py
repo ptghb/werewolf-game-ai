@@ -54,7 +54,7 @@ async def create_token(
         base_url=body.base_url,
         api_key=body.api_key,
         model=body.model,
-        enable=1,
+        enable=0,
         user_id=user_id,
     )
     session.add(token)

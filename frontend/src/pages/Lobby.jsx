@@ -137,10 +137,17 @@ function LlmSettings({ userId, onClose }) {
                   {t.base_url}
                 </div>
               </div>
+              <span style={{
+                fontSize: 11, fontWeight: 600,
+                color: t.enable ? "var(--good)" : "var(--fg-muted)",
+                whiteSpace: "nowrap",
+              }}>
+                {t.enable ? "● 已启用" : "○ 未启用"}
+              </span>
               <button className={`btn-sm ${t.enable ? "btn-ghost" : "btn-secondary"}`}
                       onClick={() => handleToggle(t)}
                       style={{ minWidth: 44, fontSize: 12 }}>
-                {t.enable ? "启用" : "禁用"}
+                {t.enable ? "禁用" : "启用"}
               </button>
               <button className="btn-ghost btn-sm" onClick={() => handleTest(t.id)} disabled={testing === t.id}
                       style={{ fontSize: 12 }}>
