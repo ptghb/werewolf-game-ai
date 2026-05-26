@@ -292,6 +292,15 @@ async def _run_game(room, preferred_role=None, god_mode=False) -> None:
                 type="phase_change",
                 payload={"phase": Phase.NIGHT_START.value, "deadline_ts": None, "day": 1},
             ))
+        # God-mode spectators also need phase_change to show PhaseBanner
+        for ws in room.spectators:
+            try:
+                await ws.send_json({
+                    "type": "phase_change",
+                    "payload": {"phase": Phase.NIGHT_START.value, "deadline_ts": None, "day": 1},
+                })
+            except Exception:
+                pass
 
         # 更新游戏状态为 playing
         async with async_session_factory() as session:
