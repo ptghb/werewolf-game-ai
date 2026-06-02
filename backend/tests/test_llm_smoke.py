@@ -14,8 +14,8 @@ pytestmark = pytest.mark.llm
 
 @pytest.mark.asyncio
 async def test_six_real_ai_finish_game():
-    if not os.getenv("SILICONFLOW_API_KEY"):
-        pytest.skip("No SILICONFLOW_API_KEY in env")
+    if not os.getenv("LLM_API_KEY"):
+        pytest.skip("No LLM_API_KEY in env")
     llm = build_llm()
     specs = [Role.WEREWOLF, Role.WEREWOLF, Role.WEREWOLF,
              Role.WITCH, Role.SEER, Role.VILLAGER]

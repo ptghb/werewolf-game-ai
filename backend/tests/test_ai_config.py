@@ -2,9 +2,9 @@ from importlib import reload
 
 
 def test_settings_reads_env(monkeypatch):
-    monkeypatch.setenv("SILICONFLOW_API_KEY", "XYZ")
-    monkeypatch.setenv("SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1")
-    monkeypatch.setenv("SILICONFLOW_MODEL", "Qwen/Qwen2.5-7B-Instruct")
+    monkeypatch.setenv("LLM_API_KEY", "XYZ")
+    monkeypatch.setenv("LLM_BASE_URL", "https://api.siliconflow.cn/v1")
+    monkeypatch.setenv("LLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")
 
     from app import config
     reload(config)
@@ -15,9 +15,9 @@ def test_settings_reads_env(monkeypatch):
 
 
 def test_build_llm_uses_settings(monkeypatch):
-    monkeypatch.setenv("SILICONFLOW_API_KEY", "XYZ")
-    monkeypatch.setenv("SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1")
-    monkeypatch.setenv("SILICONFLOW_MODEL", "Qwen/Qwen2.5-7B-Instruct")
+    monkeypatch.setenv("LLM_API_KEY", "XYZ")
+    monkeypatch.setenv("LLM_BASE_URL", "https://api.siliconflow.cn/v1")
+    monkeypatch.setenv("LLM_MODEL", "Qwen/Qwen2.5-7B-Instruct")
 
     from app import config as config_mod
     reload(config_mod)
